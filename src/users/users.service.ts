@@ -1,5 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InitialUserData, User } from './interfaces/user.interface';
+import {
+  InitialUserData,
+  UserWithoutPassword,
+} from './interfaces/user.interface';
 import createUser from './helpers/user.factory';
 import validateInput from './helpers/inputValidation';
 import { InputErrorMessages } from 'src/common/enums/errorMessages.enum';
@@ -9,7 +12,7 @@ export class UsersService {
   // Temporary in-memory array of users
   private readonly users = [];
 
-  async create(userData: InitialUserData): Promise<User> {
+  async create(userData: InitialUserData): Promise<UserWithoutPassword> {
     // Validate user input
     validateInput(userData);
 
@@ -25,6 +28,8 @@ export class UsersService {
     this.users.push(user);
     console.log('registered users', this.users);
     // Return newly created user
-    return user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...result } = user;
+    return result;
   }
 }

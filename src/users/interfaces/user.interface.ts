@@ -9,6 +9,8 @@ export interface User {
   lastSeenTime: number | null;
 }
 
+export type UserWithoutPassword = Omit<User, 'password'>;
+
 export interface InitialUserData {
   name: string;
   email: string;
