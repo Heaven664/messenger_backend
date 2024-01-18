@@ -2,6 +2,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { InitialUserData, User } from '../interfaces/user.interface';
 import hashPassword from './password.factory';
 
+/**
+ * Validates user input and creates a new user object
+ * @param userData Initial user data provided by the client
+ * @returns User object with all required properties
+ */
 export const createUser = async (userData: InitialUserData): Promise<User> => {
   // Destructure name and email from form data
   const { name, email, password } = userData as InitialUserData;
