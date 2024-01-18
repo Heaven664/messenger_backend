@@ -12,6 +12,7 @@ export class UsersService {
     const user = createUser(userData);
     // Temporary push user to in-memory array
     this.users.push(user);
+    console.log('registered users', this.users);
     // Return newly created user
     return user;
   }

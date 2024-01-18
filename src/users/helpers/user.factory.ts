@@ -3,7 +3,7 @@ import { InitialUserData, User } from '../interfaces/user.interface';
 
 export const createUser = (userData: InitialUserData): User => {
   // Destructure name and email from form data
-  const { name, email } = userData as InitialUserData;
+  const { name, email, password } = userData as InitialUserData;
 
   // Create unique id
   const id = uuidv4();
@@ -19,6 +19,7 @@ export const createUser = (userData: InitialUserData): User => {
     id,
     name,
     email,
+    password,
     imageSrc,
     residency,
     lastSeenPermission,

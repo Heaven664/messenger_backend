@@ -2,6 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  password: string;
   imageSrc: string | null;
   residency: string | null;
   lastSeenPermission: boolean;
@@ -11,4 +12,5 @@ export interface User {
 export interface InitialUserData {
   name: string;
   email: string;
+  password: string;
 }
