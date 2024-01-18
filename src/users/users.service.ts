@@ -9,7 +9,7 @@ export class UsersService {
 
   async create(userData: InitialUserData): Promise<User> {
     // Create new user object with user factory
-    const user = createUser(userData);
+    const user = await createUser(userData);
     // Temporary push user to in-memory array
     this.users.push(user);
     console.log('registered users', this.users);
