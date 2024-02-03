@@ -9,7 +9,7 @@ import hashPassword from './password.factory';
  */
 export const createUser = async (userData: InitialUserData): Promise<User> => {
   // Destructure name and email from form data
-  const { name, email, password } = userData as InitialUserData;
+  const { name, email, password } = userData;
 
   // Create unique id
   const id = uuidv4();

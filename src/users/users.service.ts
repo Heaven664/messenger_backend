@@ -27,7 +27,7 @@ export class UsersService {
     // Temporary push user to in-memory array
     this.users.push(user);
     console.log('registered users', this.users);
-    // Return newly created user
+    // Return newly created user without password property
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...result } = user;
     return result;
