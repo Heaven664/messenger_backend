@@ -45,7 +45,6 @@ export class UsersService {
     // Find user by email in database
     const user = await this.userModel.findOne({ email: userData.email });
 
-    console.log(user);
     // If user not found, throw an error
     if (!user) {
       throw new BadRequestException(InputErrorMessages.INVALID_CREDENTIALS);
