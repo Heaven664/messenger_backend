@@ -10,9 +10,3 @@ export interface User {
 }
 
 export type UserWithoutPassword = Omit<User, 'password'>;
-
-export interface InitialUserData {
-  name: string;
-  email: string;
-  password: string;
-}
