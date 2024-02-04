@@ -16,18 +16,18 @@ import { CreateUserDto } from 'src/shared/dto/create-user.dto';
 const validateInput = (userData: CreateUserDto) => {
   // Check if required fields are missing
   if (!userData.email || !userData.password || !userData.name) {
-    throw new BadRequestException(InputErrorMessages.MissingRequiredFields);
+    throw new BadRequestException(InputErrorMessages.MISSING_REQUIRED_FIELDS);
   }
 
   // Validate email
   if (!emailValidator.validate(userData.email)) {
-    throw new BadRequestException(InputErrorMessages.InvalidEmail);
+    throw new BadRequestException(InputErrorMessages.INVALID_EMAIL);
   }
 
   // Validate password length
   const MIN_PASSWORD_LENGTH = 6;
   if (userData.password.length < MIN_PASSWORD_LENGTH) {
-    throw new BadRequestException(InputErrorMessages.ShortPassword);
+    throw new BadRequestException(InputErrorMessages.SHORT_PASSWORD);
   }
 };
 

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserWithoutPassword } from './interfaces/user.interface';
 import createUser from './helpers/user.factory';
 import validateInput from './helpers/inputValidation';
@@ -6,7 +6,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
 import { CreateUserDto } from 'src/shared/dto/create-user.dto';
-import { InputErrorMessages } from 'src/common/enums/errorMessages.enum';
+import { resolveDatabaseError } from './helpers/customDatabaseErrorHandler';
 
 @Injectable()
 export class UsersService {
@@ -25,9 +25,8 @@ export class UsersService {
       const newUser = new this.userModel(user);
       await newUser.save();
     } catch (error) {
-      if (error.code === 11000) {
-        throw new BadRequestException(InputErrorMessages.UserAlreadyExists);
-      }
+      // Handle database error
+      resolveDatabaseError(error.code);
     }
 
     // Return newly created user without password property
