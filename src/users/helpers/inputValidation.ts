@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
-import { InitialUserData } from '../interfaces/user.interface';
 import * as emailValidator from 'email-validator';
 import { InputErrorMessages } from 'src/common/enums/errorMessages.enum';
+import { CreateUserDto } from 'src/shared/dto/create-user.dto';
 
 /**
  * Checks if the provided user data is valid:
@@ -13,7 +13,7 @@ import { InputErrorMessages } from 'src/common/enums/errorMessages.enum';
  * @returns void
  
  */
-const validateInput = (userData: InitialUserData) => {
+const validateInput = (userData: CreateUserDto) => {
   // Check if required fields are missing
   if (!userData.email || !userData.password || !userData.name) {
     throw new BadRequestException(InputErrorMessages.MissingRequiredFields);
