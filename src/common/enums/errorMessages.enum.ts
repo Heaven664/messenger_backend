@@ -3,4 +3,5 @@ export enum InputErrorMessages {
   INVALID_EMAIL = 'Invalid email',
   SHORT_PASSWORD = 'Password must be at least 6 symbols long',
   USER_ALREADY_EXISTS = 'User already exists',
+  INVALID_CREDENTIALS = 'Invalid email or password',
 }
