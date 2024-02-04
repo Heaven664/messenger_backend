@@ -7,6 +7,6 @@ export class AuthService {
   constructor(private readonly usersService: UsersService) {}
 
   async registerUser(userData: CreateUserDto) {
-    return await this.usersService.create(userData);
+    return await this.usersService.registerNewUser(userData);
   }
 }

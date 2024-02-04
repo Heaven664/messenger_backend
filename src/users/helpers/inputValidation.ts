@@ -13,7 +13,7 @@ import { CreateUserDto } from 'src/shared/dto/create-user.dto';
  * @returns void
  
  */
-const validateInput = (userData: CreateUserDto) => {
+const validateRegistrationInput = (userData: CreateUserDto) => {
   // Check if required fields are missing
   if (!userData.email || !userData.password || !userData.name) {
     throw new BadRequestException(InputErrorMessages.MISSING_REQUIRED_FIELDS);
@@ -31,4 +31,4 @@ const validateInput = (userData: CreateUserDto) => {
   }
 };
 
-export default validateInput;
+export default validateRegistrationInput;

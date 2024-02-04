@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UserWithoutPassword } from './interfaces/user.interface';
 import createUser from './helpers/user.factory';
-import validateInput from './helpers/inputValidation';
+import validateRegistrationInput from './helpers/inputValidation';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
@@ -13,9 +13,9 @@ export class UsersService {
   // Temporary in-memory array of users
   constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
-  async create(userData: CreateUserDto): Promise<UserWithoutPassword> {
+  async registerNewUser(userData: CreateUserDto): Promise<UserWithoutPassword> {
     // Validate user input
-    validateInput(userData);
+    validateRegistrationInput(userData);
 
     // Create new user object with user factory
     const user = await createUser(userData);
