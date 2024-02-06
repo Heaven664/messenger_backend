@@ -64,4 +64,20 @@ export class UsersService {
       lastSeenTime: user.lastSeenTime,
     };
   }
+
+  async findUserById(id: string): Promise<UserWithoutPassword> {
+    // Find user by id in database
+    const user = await this.userModel.findById(id);
+
+    // Return user without password property and replace _id with id
+    return {
+      id: user.id.toString(),
+      name: user.name,
+      email: user.email,
+      imageSrc: user.imageSrc,
+      residency: user.residency,
+      lastSeenPermission: user.lastSeenPermission,
+      lastSeenTime: user.lastSeenTime,
+    };
+  }
 }
