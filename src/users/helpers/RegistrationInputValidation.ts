@@ -11,7 +11,6 @@ import { CreateUserDto } from 'src/shared/dto/create-user.dto';
  * @throws BadRequestException if the user data is invalid
  * @param userData Initial user data provided by the client
  * @returns void
- 
  */
 const validateRegistrationInput = (userData: CreateUserDto) => {
   // Check if required fields are missing
