@@ -67,6 +67,7 @@ export class UsersService {
       lastSeenTime: user.lastSeenTime,
     };
 
+    // Payload to be extracted from the client request
     const payload = {
       username: user.email,
       sub: {
@@ -76,6 +77,7 @@ export class UsersService {
 
     return {
       user: returnUserData,
+      // Generate access and refresh tokens
       backendTokens: {
         accessToken: await this.jwtService.signAsync(payload, {
           expiresIn: '1h',
