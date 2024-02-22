@@ -1,3 +1,4 @@
+import { JwtService } from '@nestjs/jwt';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserWithoutPassword } from './interfaces/user.interface';
 import createUser from './helpers/user.factory';
@@ -13,8 +14,10 @@ import { InputErrorMessages } from 'src/common/enums/errorMessages.enum';
 
 @Injectable()
 export class UsersService {
-  // Temporary in-memory array of users
-  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async registerNewUser(userData: CreateUserDto): Promise<UserWithoutPassword> {
     // Validate user input for registration
@@ -38,7 +41,7 @@ export class UsersService {
     return result;
   }
 
-  async loginUser(userData: LoginUserDto): Promise<UserWithoutPassword> {
+  async loginUser(userData: LoginUserDto) {
     // Validate user input for login
     validateLoginInput(userData);
 
@@ -54,7 +57,7 @@ export class UsersService {
     await comparePassword(userData.password, user.password);
 
     // Return user without password property and replace _id with id
-    return {
+    const returnUserData: UserWithoutPassword = {
       id: user.id.toString(),
       name: user.name,
       email: user.email,
@@ -62,6 +65,27 @@ export class UsersService {
       residency: user.residency,
       lastSeenPermission: user.lastSeenPermission,
       lastSeenTime: user.lastSeenTime,
+    };
+
+    const payload = {
+      username: user.email,
+      sub: {
+        name: user.name,
+      },
+    };
+
+    return {
+      user: returnUserData,
+      backendTokens: {
+        accessToken: await this.jwtService.signAsync(payload, {
+          expiresIn: '1h',
+          secret: process.env.JWT_SECRET_KEY,
+        }),
+        refreshToken: await this.jwtService.signAsync(payload, {
+          expiresIn: '7d',
+          secret: process.env.JWT_REFRESH_TOKEN,
+        }),
+      },
     };
   }
 

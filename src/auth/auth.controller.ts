@@ -15,9 +15,7 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(
-    @Body() loginUserDto: LoginUserDto,
-  ): Promise<UserWithoutPassword> {
+  async login(@Body() loginUserDto: LoginUserDto) {
     return this.authService.loginUser(loginUserDto);
   }
 }
