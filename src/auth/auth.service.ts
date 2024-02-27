@@ -2,6 +2,7 @@ import { JwtService } from '@nestjs/jwt';
 import { CreateUserDto, LoginUserDto } from 'src/shared/dto/create-user.dto';
 import { UsersService } from './../users/users.service';
 import { Injectable } from '@nestjs/common';
+import { TOKEN_EXPIRATION_TIME } from 'lib/constants';
 
 @Injectable()
 export class AuthService {
@@ -35,6 +36,7 @@ export class AuthService {
           expiresIn: '7d',
           secret: process.env.JWT_REFRESH_TOKEN,
         }),
+        expiresIn: TOKEN_EXPIRATION_TIME,
       },
     };
   }

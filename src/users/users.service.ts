@@ -11,6 +11,7 @@ import { resolveDatabaseError } from './helpers/customDatabaseErrorHandler';
 import validateLoginInput from './helpers/LoginInputValidation';
 import { comparePassword } from './helpers/validatePassword';
 import { InputErrorMessages } from 'src/common/enums/errorMessages.enum';
+import { TOKEN_EXPIRATION_TIME } from 'lib/constants';
 
 @Injectable()
 export class UsersService {
@@ -87,6 +88,7 @@ export class UsersService {
           expiresIn: '7d',
           secret: process.env.JWT_REFRESH_TOKEN,
         }),
+        expiresIn: TOKEN_EXPIRATION_TIME,
       },
     };
   }
