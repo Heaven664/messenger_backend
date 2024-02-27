@@ -88,7 +88,9 @@ export class UsersService {
           expiresIn: '7d',
           secret: process.env.JWT_REFRESH_TOKEN,
         }),
-        expiresIn: TOKEN_EXPIRATION_TIME,
+        expiresIn: new Date().setTime(
+          new Date().getTime() + TOKEN_EXPIRATION_TIME,
+        ),
       },
     };
   }
