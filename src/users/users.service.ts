@@ -5,13 +5,14 @@ import createUser from './helpers/user.factory';
 import validateRegistrationInput from './helpers/RegistrationInputValidation';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
-import { Model } from 'mongoose';
+import { Model, QueryOptions } from 'mongoose';
 import { CreateUserDto, LoginUserDto } from 'src/shared/dto/create-user.dto';
 import { resolveDatabaseError } from './helpers/customDatabaseErrorHandler';
 import validateLoginInput from './helpers/LoginInputValidation';
 import { comparePassword } from './helpers/validatePassword';
 import { InputErrorMessages } from 'src/common/enums/errorMessages.enum';
 import { TOKEN_EXPIRATION_TIME } from 'lib/constants';
+import { UpdateUserInfoDto } from './dto/user-dto';
 
 @Injectable()
 export class UsersService {
@@ -134,6 +135,36 @@ export class UsersService {
       residency: user.residency,
       lastSeenPermission: user.lastSeenPermission,
       lastSeenTime: user.lastSeenTime,
+    };
+  }
+
+  async updateUserInfo(
+    updateUserInfoDto: UpdateUserInfoDto,
+  ): Promise<UserWithoutPassword> {
+    // Destructure id and other data from updateUserDto
+    const { id, ...newInfoValues } = updateUserInfoDto;
+    // Configure options for the update operation
+    const operationOptions: QueryOptions = {
+      new: true,
+      lean: true,
+    };
+
+    // Find and modify user by id in database
+    const updatedInfo = await this.userModel.findByIdAndUpdate(
+      id,
+      newInfoValues,
+      operationOptions,
+    );
+
+    // Return user data
+    return {
+      id: updatedInfo._id.toString(),
+      name: updatedInfo.name,
+      email: updatedInfo.email,
+      imageSrc: updatedInfo.imageSrc,
+      residency: updatedInfo.residency,
+      lastSeenPermission: updatedInfo.lastSeenPermission,
+      lastSeenTime: updatedInfo.lastSeenTime,
     };
   }
 }
