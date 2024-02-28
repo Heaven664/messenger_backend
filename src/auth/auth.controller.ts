@@ -1,6 +1,5 @@
 import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { UserWithoutPassword } from 'src/users/interfaces/user.interface';
 import { CreateUserDto, LoginUserDto } from 'src/shared/dto/create-user.dto';
 import { RefreshJwtGuard } from './guards/refresh.guard';
 
@@ -9,9 +8,7 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
-  async register(
-    @Body() createUserDto: CreateUserDto,
-  ): Promise<UserWithoutPassword> {
+  async register(@Body() createUserDto: CreateUserDto) {
     return this.authService.registerUser(createUserDto);
   }
 

@@ -20,12 +20,15 @@ export class UsersService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async registerNewUser(userData: CreateUserDto): Promise<UserWithoutPassword> {
+  async registerNewUser(userData: CreateUserDto) {
     // Validate user input for registration
     validateRegistrationInput(userData);
 
     // Create new user object with user factory
     const user = await createUser(userData);
+
+    // Save initial password to be returned to the client
+    const initialPassword = userData.password;
 
     try {
       // Save user to database
@@ -36,10 +39,33 @@ export class UsersService {
       resolveDatabaseError(error.code);
     }
 
-    // Return newly created user without password property
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = user;
-    return result;
+    // Payload to be extracted from the client request
+    const payload = {
+      username: user.email,
+      sub: {
+        name: user.name,
+      },
+    };
+    // User object to be returned to the client with initial password
+    const returnUser = { ...user, password: initialPassword };
+
+    return {
+      user: returnUser,
+      // Generate access and refresh tokens
+      backendTokens: {
+        accessToken: await this.jwtService.signAsync(payload, {
+          expiresIn: '1h',
+          secret: process.env.JWT_SECRET_KEY,
+        }),
+        refreshToken: await this.jwtService.signAsync(payload, {
+          expiresIn: '7d',
+          secret: process.env.JWT_REFRESH_TOKEN,
+        }),
+        expiresIn: new Date().setTime(
+          new Date().getTime() + TOKEN_EXPIRATION_TIME,
+        ),
+      },
+    };
   }
 
   async loginUser(userData: LoginUserDto) {
