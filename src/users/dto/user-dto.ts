@@ -4,3 +4,8 @@ export class UpdateUserInfoDto {
   email: string;
   residency: string;
 }
+
+export class UpdateLastSeenDto {
+  id: string;
+  lastSeenPermission: boolean;
+}

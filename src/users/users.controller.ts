@@ -1,7 +1,7 @@
 import { UsersService } from './users.service';
 import { Controller, Param, Get, Put, Body } from '@nestjs/common';
 import { UserWithoutPassword } from 'src/users/interfaces/user.interface';
-import { UpdateUserInfoDto } from './dto/user-dto';
+import { UpdateLastSeenDto, UpdateUserInfoDto } from './dto/user-dto';
 
 @Controller('users')
 export class UsersController {
@@ -14,8 +14,15 @@ export class UsersController {
 
   @Put('info')
   async updateInfo(
-    @Body() updateUserDto: UpdateUserInfoDto,
+    @Body() updateInfo: UpdateUserInfoDto,
   ): Promise<UserWithoutPassword> {
-    return this.usersService.updateUserInfo(updateUserDto);
+    return this.usersService.updateUserInfo(updateInfo);
+  }
+
+  @Put('last-seen')
+  async updateLastSeen(
+    @Body() updateLastSeenDto: UpdateLastSeenDto,
+  ): Promise<UserWithoutPassword> {
+    return this.usersService.updateLastSeenPermission(updateLastSeenDto);
   }
 }

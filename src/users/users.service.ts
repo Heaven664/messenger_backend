@@ -12,7 +12,7 @@ import validateLoginInput from './helpers/LoginInputValidation';
 import { comparePassword } from './helpers/validatePassword';
 import { InputErrorMessages } from 'src/common/enums/errorMessages.enum';
 import { TOKEN_EXPIRATION_TIME } from 'lib/constants';
-import { UpdateUserInfoDto } from './dto/user-dto';
+import { UpdateLastSeenDto, UpdateUserInfoDto } from './dto/user-dto';
 
 @Injectable()
 export class UsersService {
@@ -153,6 +153,37 @@ export class UsersService {
     const updatedInfo = await this.userModel.findByIdAndUpdate(
       id,
       newInfoValues,
+      operationOptions,
+    );
+
+    // Return user data
+    return {
+      id: updatedInfo._id.toString(),
+      name: updatedInfo.name,
+      email: updatedInfo.email,
+      imageSrc: updatedInfo.imageSrc,
+      residency: updatedInfo.residency,
+      lastSeenPermission: updatedInfo.lastSeenPermission,
+      lastSeenTime: updatedInfo.lastSeenTime,
+    };
+  }
+
+  async updateLastSeenPermission(
+    updateLastSeenDto: UpdateLastSeenDto,
+  ): Promise<UserWithoutPassword> {
+    // Extract id and lastSeenPermission from updateLastSeenDto
+    const { id, ...lastSeenPermission } = updateLastSeenDto;
+
+    // Configure options for the update operation
+    const operationOptions: QueryOptions = {
+      new: true,
+      lean: true,
+    };
+
+    // Find user by id and change lastSeenPermission in database
+    const updatedInfo = await this.userModel.findByIdAndUpdate(
+      id,
+      lastSeenPermission,
       operationOptions,
     );
 
