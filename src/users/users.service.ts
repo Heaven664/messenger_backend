@@ -2,13 +2,11 @@ import { JwtService } from '@nestjs/jwt';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { UserWithoutPassword } from './interfaces/user.interface';
 import createUser from './helpers/user.factory';
-import validateRegistrationInput from './helpers/RegistrationInputValidation';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Model, QueryOptions } from 'mongoose';
 import { CreateUserDto, LoginUserDto } from 'src/shared/dto/create-user.dto';
 import { resolveDatabaseError } from './helpers/customDatabaseErrorHandler';
-import validateLoginInput from './helpers/LoginInputValidation';
 import { comparePassword } from './helpers/validatePassword';
 import { InputErrorMessages } from 'src/common/enums/errorMessages.enum';
 import { TOKEN_EXPIRATION_TIME } from 'lib/constants';
@@ -22,9 +20,6 @@ export class UsersService {
   ) {}
 
   async registerNewUser(userData: CreateUserDto) {
-    // Validate user input for registration
-    validateRegistrationInput(userData);
-
     // Create new user object with user factory
     const user = await createUser(userData);
 
@@ -70,9 +65,6 @@ export class UsersService {
   }
 
   async loginUser(userData: LoginUserDto) {
-    // Validate user input for login
-    validateLoginInput(userData);
-
     // Find user by email in database
     const user = await this.userModel.findOne({ email: userData.email });
 
