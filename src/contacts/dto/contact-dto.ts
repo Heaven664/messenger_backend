@@ -9,3 +9,9 @@ export class AddContactDto {
   @IsEmail()
   friendEmail: string;
 }
+
+export class FindFriendsDto {
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+}

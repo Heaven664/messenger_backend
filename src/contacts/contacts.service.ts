@@ -1,6 +1,6 @@
 import { UsersService } from './../users/users.service';
 import { InjectModel } from '@nestjs/mongoose';
-import { AddContactDto } from './dto/contact-dto';
+import { AddContactDto, FindFriendsDto } from './dto/contact-dto';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Contact } from './schemas/contact.schema';
 import { Model } from 'mongoose';
@@ -11,6 +11,35 @@ export class ContactsService {
     @InjectModel(Contact.name) private contactModel: Model<Contact>,
     private readonly usersService: UsersService,
   ) {}
+
+  async findFriends(findFriendsDto: FindFriendsDto) {
+    const { email } = findFriendsDto;
+    // Find the user's friends
+    return await this.contactModel.aggregate([
+      {
+        // Find documents where the user's email is in the friendship array
+        $match: { 'friendship.email': email },
+      },
+      // Unwind the friendship array
+      { $unwind: '$friendship' },
+      {
+        // Project the fields we want to return
+        $project: {
+          _id: 0,
+          name: '$friendship.name',
+          email: '$friendship.email',
+          imageSrc: '$friendship.imageSrc',
+          residency: '$friendship.residency',
+          lastSeenPermission: '$friendship.lastSeenPermission',
+          lastSeenTime: '$friendship.lastSeenTime',
+        },
+      },
+      {
+        // Remove documents with the user's own email from the results
+        $match: { email: { $ne: email } },
+      },
+    ]);
+  }
 
   async findFriendship(userEmail: string, friendEmail: string) {
     // Check if there is a friendship between the two users

@@ -1,6 +1,6 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ContactsService } from './contacts.service';
-import { AddContactDto } from './dto/contact-dto';
+import { AddContactDto, FindFriendsDto } from './dto/contact-dto';
 
 @Controller('contacts')
 export class ContactsController {
@@ -9,5 +9,10 @@ export class ContactsController {
   @Post('add')
   async addContact(@Body() addContactDto: AddContactDto) {
     return this.contactsService.addContact(addContactDto);
+  }
+
+  @Get('friends')
+  async findFriends(@Body() findFriendsDto: FindFriendsDto) {
+    return this.contactsService.findFriends(findFriendsDto);
   }
 }
