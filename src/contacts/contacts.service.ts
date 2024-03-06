@@ -14,21 +14,12 @@ export class ContactsService {
 
   async findFriendship(userEmail: string, friendEmail: string) {
     // Check if there is a friendship between the two users
-    const friendship = await this.contactModel.findOne({
+    return await this.contactModel.findOne({
       $and: [
-        {
-          friendship: {
-            $elemMatch: { email: userEmail },
-          },
-        },
-        {
-          friendship: {
-            $elemMatch: { email: friendEmail },
-          },
-        },
+        { 'friendship.email': userEmail },
+        { 'friendship.email': friendEmail },
       ],
     });
-    return friendship;
   }
 
   async addContact(addContactDto: AddContactDto) {
