@@ -2,10 +2,11 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/helpers/users.module';
+import { UsersModule } from './users/users.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { MongoConnectionString } from 'config/mongo.config';
+import { ContactsModule } from './contacts/contacts.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { MongoConnectionString } from 'config/mongo.config';
     UsersModule,
     ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRoot(MongoConnectionString),
+    ContactsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

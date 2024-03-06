@@ -118,6 +118,31 @@ export class UsersService {
     // Find user by id in database
     const user = await this.userModel.findById(id);
 
+    // Handle if user not found and throw an error
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+
+    // Return user without password property and replace _id with id
+    return {
+      id: user.id.toString(),
+      name: user.name,
+      email: user.email,
+      imageSrc: user.imageSrc,
+      residency: user.residency,
+      lastSeenPermission: user.lastSeenPermission,
+      lastSeenTime: user.lastSeenTime,
+    };
+  }
+
+  async findUserByEmail(email: string): Promise<UserWithoutPassword> {
+    const user = await this.userModel.findOne({ email });
+
+    // Handle if user not found and throw an error
+    if (!user) {
+      throw new BadRequestException('User not found11');
+    }
+
     // Return user without password property and replace _id with id
     return {
       id: user.id.toString(),
