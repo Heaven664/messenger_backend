@@ -6,6 +6,9 @@ export type FriendDocument = HydratedDocument<Friend>;
 @Schema()
 export class Friend {
   @Prop()
+  id: string;
+
+  @Prop()
   name: string;
 
   @Prop()

@@ -1,6 +1,6 @@
 import { UsersService } from './../users/users.service';
 import { InjectModel } from '@nestjs/mongoose';
-import { AddContactDto, FindFriendsDto } from './dto/contact-dto';
+import { AddContactDto } from './dto/contact-dto';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Contact } from './schemas/contact.schema';
 import { Model } from 'mongoose';
@@ -12,8 +12,7 @@ export class ContactsService {
     private readonly usersService: UsersService,
   ) {}
 
-  async findFriends(findFriendsDto: FindFriendsDto) {
-    const { email } = findFriendsDto;
+  async findFriends(email: string) {
     // Find the user's friends
     return await this.contactModel.aggregate([
       {
@@ -26,6 +25,7 @@ export class ContactsService {
         // Project the fields we want to return
         $project: {
           _id: 0,
+          id: '$friendship.id',
           name: '$friendship.name',
           email: '$friendship.email',
           imageSrc: '$friendship.imageSrc',
