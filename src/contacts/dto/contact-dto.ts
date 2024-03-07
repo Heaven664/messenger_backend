@@ -9,3 +9,13 @@ export class AddContactDto {
   @IsEmail()
   friendEmail: string;
 }
+
+export class RemoveContactDto {
+  @IsNotEmpty()
+  @IsEmail()
+  userEmail: string;
+
+  @IsNotEmpty()
+  @IsEmail()
+  friendEmail: string;
+}

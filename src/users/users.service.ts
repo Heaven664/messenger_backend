@@ -140,7 +140,7 @@ export class UsersService {
 
     // Handle if user not found and throw an error
     if (!user) {
-      throw new BadRequestException('User not found11');
+      throw new BadRequestException('User not found');
     }
 
     // Return user without password property and replace _id with id

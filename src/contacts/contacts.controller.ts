@@ -1,6 +1,6 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Query } from '@nestjs/common';
 import { ContactsService } from './contacts.service';
-import { AddContactDto } from './dto/contact-dto';
+import { AddContactDto, RemoveContactDto } from './dto/contact-dto';
 
 @Controller('contacts')
 export class ContactsController {
@@ -14,5 +14,10 @@ export class ContactsController {
   @Get('friends')
   async findFriends(@Query('email') email: string) {
     return this.contactsService.findFriends(email);
+  }
+
+  @Delete('unfriend')
+  async removeContact(@Body() removeContactDto: RemoveContactDto) {
+    return this.contactsService.removeContact(removeContactDto);
   }
 }

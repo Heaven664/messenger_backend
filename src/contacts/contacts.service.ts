@@ -1,6 +1,6 @@
 import { UsersService } from './../users/users.service';
 import { InjectModel } from '@nestjs/mongoose';
-import { AddContactDto } from './dto/contact-dto';
+import { AddContactDto, RemoveContactDto } from './dto/contact-dto';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Contact } from './schemas/contact.schema';
 import { Model } from 'mongoose';
@@ -77,5 +77,25 @@ export class ContactsService {
     contact.friendship = [firstUser, secondUser];
     const savedContact = await contact.save();
     return savedContact.friendship;
+  }
+
+  async removeContact(removeContactDto: RemoveContactDto) {
+    const { userEmail, friendEmail } = removeContactDto;
+
+    // If the user tries to remove themselves as a friend, throw an error
+    if (userEmail === friendEmail) {
+      throw new BadRequestException('You cannot remove unfriend yourself');
+    }
+
+    // Find the friendship
+    const friendship = await this.findFriendship(userEmail, friendEmail);
+
+    // If the friendship is not found, throw an error
+    if (!friendship) {
+      throw new BadRequestException('Friendship not found');
+    }
+
+    // Remove the friendship
+    return await friendship.deleteOne();
   }
 }
