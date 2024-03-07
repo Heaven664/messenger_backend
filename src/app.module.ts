@@ -7,6 +7,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
 import { MongoConnectionString } from 'config/mongo.config';
 import { ContactsModule } from './contacts/contacts.module';
+import { ChatsModule } from './chats/chats.module';
+import { MessagesModule } from './messages/messages.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { ContactsModule } from './contacts/contacts.module';
     ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRoot(MongoConnectionString),
     ContactsModule,
+    ChatsModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
