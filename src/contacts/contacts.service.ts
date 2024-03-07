@@ -76,6 +76,6 @@ export class ContactsService {
     const contact = new this.contactModel();
     contact.friendship = [firstUser, secondUser];
     const savedContact = await contact.save();
-    return savedContact;
+    return savedContact.friendship;
   }
 }
