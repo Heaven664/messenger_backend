@@ -6,6 +6,9 @@ export type ChatDocument = HydratedDocument<Chat>;
 @Schema()
 export class Chat {
   @Prop()
+  userId: string;
+
+  @Prop()
   name: string;
 
   @Prop()
@@ -15,7 +18,7 @@ export class Chat {
   friendEmail: string;
 
   @Prop()
-  friendImage: string;
+  imageUrl: string;
 
   @Prop()
   unreadMessages: number;

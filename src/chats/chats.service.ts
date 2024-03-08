@@ -23,6 +23,7 @@ export class ChatsService {
 
     // Destructure user data
     const {
+      id: userId,
       email: userEmail,
       name: userName,
       imageSrc: userImage,
@@ -32,6 +33,7 @@ export class ChatsService {
 
     // Destructure friend data
     const {
+      id: friendId,
       email: friendEmail,
       name: friendName,
       imageSrc: friendImage,
@@ -46,10 +48,11 @@ export class ChatsService {
 
     // Create chat data for a friend
     const firstChatData = new this.chatModel({
+      userId: friendId,
       name: friendName,
       userEmail: userEmail,
       friendEmail: friendEmail,
-      friendImage: friendImage,
+      imageUrl: friendImage,
       lastMessage,
       unreadMessages: 0,
       lastSeenPermission: friendLastSeenPermission,
@@ -58,10 +61,11 @@ export class ChatsService {
 
     // Create chat data for a user
     const secondChatData = new this.chatModel({
+      userId: userId,
       name: userName,
       userEmail: friendEmail,
       friendEmail: userEmail,
-      friendImage: userImage,
+      imageUrl: userImage,
       lastMessage: lastMessage,
       unreadMessages: 1,
       lastSeenPermission: userLastSeenPermission,
@@ -75,6 +79,12 @@ export class ChatsService {
 
   async findChatByEmail(userEmail: string, friendEmail: string) {
     return await this.chatModel.findOne({ userEmail, friendEmail });
+  }
+
+  async findAllChats(userEmail: string) {
+    const chats = await this.chatModel.find({ userEmail }, { _id: 0, __v: 0 });
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return chats;
   }
 
   async increaseUnreadMessages(userEmail: string, friendEmail: string) {
