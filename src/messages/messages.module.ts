@@ -4,9 +4,11 @@ import { MessagesService } from './messages.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Message, MessageSchema } from './schema/message.schema';
 import { ChatsModule } from 'src/chats/chats.module';
+import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
+    UsersModule,
     ChatsModule,
     MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
   ],

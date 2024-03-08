@@ -21,3 +21,13 @@ export class AddMessageDto {
   @IsNumber()
   sentTime: number;
 }
+
+export class GetMessageDto {
+  @IsNotEmpty()
+  @IsString()
+  userEmail: string;
+
+  @IsNotEmpty()
+  @IsString()
+  friendEmail: string;
+}
