@@ -3,11 +3,11 @@ import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 export class AddMessageDto {
   @IsNotEmpty()
   @IsString()
-  senderId: string;
+  senderEmail: string;
 
   @IsNotEmpty()
   @IsString()
-  receiverId: string;
+  receiverEmail: string;
 
   @IsNotEmpty()
   @IsString()

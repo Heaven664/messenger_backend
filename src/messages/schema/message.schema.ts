@@ -6,10 +6,10 @@ export type MessageDocument = HydratedDocument<Message>;
 @Schema()
 export class Message {
   @Prop()
-  senderId: string;
+  senderEmail: string;
 
   @Prop()
-  receiverId: string;
+  receiverEmail: string;
 
   @Prop()
   messageBody: string;

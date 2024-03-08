@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { CreateChatDto } from './dto/chats-dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Chat } from './schema/chats.schema';
 import { Model } from 'mongoose';
@@ -12,45 +11,83 @@ export class ChatsService {
     private usersService: UsersService,
   ) {}
 
-  async createChat(createChatDto: CreateChatDto) {
+  // Create new chat
+  async createChat(
+    lastMessage: number,
+    senderEmail: string,
+    receiverEmail: string,
+  ) {
+    // Check if user and friend exist
+    const user = await this.usersService.findUserByEmail(senderEmail);
+    const friend = await this.usersService.findUserByEmail(receiverEmail);
+
+    // Destructure user data
     const {
-      userEmail,
-      friendEmail,
-      friendImage,
-      lastMessage,
-      lastSeenPermission,
-      lastSeenTime,
-    } = createChatDto;
+      email: userEmail,
+      name: userName,
+      imageSrc: userImage,
+      lastSeenTime: userLastSeenTime,
+      lastSeenPermission: userLastSeenPermission,
+    } = user;
+
+    // Destructure friend data
+    const {
+      email: friendEmail,
+      name: friendName,
+      imageSrc: friendImage,
+      lastSeenPermission: friendLastSeenPermission,
+      lastSeenTime: friendLastSeenTime,
+    } = friend;
 
     // Check if user and friend exist
-    const user = await this.usersService.findUserByEmail(userEmail);
-    const friend = await this.usersService.findUserByEmail(friendEmail);
-
     if (!user || !friend) {
       throw new BadRequestException('User or friend not found');
     }
 
+    // Create chat data for a friend
     const firstChatData = new this.chatModel({
-      userEmail,
-      friendEmail,
-      friendImage,
+      name: friendName,
+      userEmail: userEmail,
+      friendEmail: friendEmail,
+      friendImage: friendImage,
       lastMessage,
       unreadMessages: 0,
-      lastSeenPermission,
-      lastSeenTime,
+      lastSeenPermission: friendLastSeenPermission,
+      lastSeenTime: friendLastSeenTime,
     });
 
+    // Create chat data for a user
     const secondChatData = new this.chatModel({
+      name: userName,
       userEmail: friendEmail,
       friendEmail: userEmail,
-      friendImage,
-      lastMessage,
+      friendImage: userImage,
+      lastMessage: lastMessage,
       unreadMessages: 1,
-      lastSeenPermission,
-      lastSeenTime,
+      lastSeenPermission: userLastSeenPermission,
+      lastSeenTime: userLastSeenTime,
     });
 
+    // Create a char for user and friend
     await secondChatData.save();
     return await firstChatData.save();
+  }
+
+  async findChatByEmail(userEmail: string, friendEmail: string) {
+    return await this.chatModel.findOne({ userEmail, friendEmail });
+  }
+
+  async increaseUnreadMessages(userEmail: string, friendEmail: string) {
+    return await this.chatModel.findOneAndUpdate(
+      { userEmail: friendEmail, friendEmail: userEmail },
+      { $inc: { unreadMessages: 1 } },
+    );
+  }
+
+  async clearUnreadMessages(userEmail: string, friendEmail: string) {
+    return await this.chatModel.findOneAndUpdate(
+      { userEmail: friendEmail, friendEmail: userEmail },
+      { unreadMessages: 0 },
+    );
   }
 }
