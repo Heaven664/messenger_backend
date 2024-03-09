@@ -15,21 +15,31 @@ export class MessagesService {
   ) {}
 
   async addMessage(addMessageDto: AddMessageDto) {
+    // Set message as not viewed
     addMessageDto['viewed'] = false;
 
     const { senderEmail, receiverEmail, sentTime } = addMessageDto;
 
+    // Check if a chat exists
     const chat = await this.chatsService.findChatByEmail(
       senderEmail,
       receiverEmail,
     );
 
     if (!chat) {
+      // Create a new chat
       await this.chatsService.createChat(sentTime, senderEmail, receiverEmail);
     } else {
+      // Increase unread messages
       await this.chatsService.increaseUnreadMessages(
         senderEmail,
         receiverEmail,
+      );
+      // Update last message time
+      await this.chatsService.updateLastMessage(
+        senderEmail,
+        receiverEmail,
+        sentTime,
       );
     }
 

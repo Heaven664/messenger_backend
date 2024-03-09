@@ -94,8 +94,23 @@ export class ChatsService {
     );
   }
 
+  async updateLastMessage(
+    userEmail: string,
+    friendEmail: string,
+    lastMessageTime: number,
+  ) {
+    return await this.chatModel.updateMany(
+      {
+        $or: [
+          { userEmail, friendEmail },
+          { userEmail: friendEmail, friendEmail: userEmail },
+        ],
+      },
+      { lastMessage: lastMessageTime },
+    );
+  }
   async clearUnreadMessages(userEmail: string, friendEmail: string) {
-    return await this.chatModel.findOneAndUpdate(
+    return await this.chatModel.find(
       { userEmail: friendEmail, friendEmail: userEmail },
       { unreadMessages: 0 },
     );
