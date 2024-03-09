@@ -110,8 +110,8 @@ export class ChatsService {
     );
   }
   async clearUnreadMessages(userEmail: string, friendEmail: string) {
-    return await this.chatModel.find(
-      { userEmail: friendEmail, friendEmail: userEmail },
+    return await this.chatModel.findOneAndUpdate(
+      { userEmail, friendEmail },
       { unreadMessages: 0 },
     );
   }
