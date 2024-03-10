@@ -1,15 +1,25 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Chat } from './schema/chats.schema';
 import { Model } from 'mongoose';
 import { UsersService } from 'src/users/users.service';
+import { MessagesService } from 'src/messages/messages.service';
+import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
-export class ChatsService {
+export class ChatsService implements OnModuleInit {
+  private messagesService: MessagesService;
   constructor(
     @InjectModel(Chat.name) private chatModel: Model<Chat>,
+    private moduleRef: ModuleRef,
     private usersService: UsersService,
   ) {}
+
+  onModuleInit() {
+    this.messagesService = this.moduleRef.get(MessagesService, {
+      strict: false,
+    });
+  }
 
   // Create new chat
   async createChat(
@@ -110,9 +120,11 @@ export class ChatsService {
     );
   }
   async clearUnreadMessages(userEmail: string, friendEmail: string) {
-    return await this.chatModel.findOneAndUpdate(
+    await this.chatModel.findOneAndUpdate(
       { userEmail, friendEmail },
       { unreadMessages: 0 },
     );
+    await this.messagesService.readMessages(userEmail, friendEmail);
+    return;
   }
 }

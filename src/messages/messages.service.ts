@@ -1,18 +1,24 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { AddMessageDto, GetMessageDto } from './dto/message-dto';
 import { Message } from './schema/message.schema';
 import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { ChatsService } from 'src/chats/chats.service';
 import { UsersService } from 'src/users/users.service';
+import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
-export class MessagesService {
+export class MessagesService implements OnModuleInit {
+  private chatsService: ChatsService;
   constructor(
     @InjectModel(Message.name) private messageModel: Model<Message>,
-    private chatsService: ChatsService,
+    private moduleRef: ModuleRef,
     private usersService: UsersService,
   ) {}
+
+  onModuleInit() {
+    this.chatsService = this.moduleRef.get(ChatsService, { strict: false });
+  }
 
   async addMessage(addMessageDto: AddMessageDto) {
     // Set message as not viewed
@@ -66,5 +72,12 @@ export class MessagesService {
     });
 
     return messages;
+  }
+
+  async readMessages(userEmail: string, friendEmail: string) {
+    await this.messageModel.updateMany(
+      { senderEmail: friendEmail, receiverEmail: userEmail },
+      { viewed: true },
+    );
   }
 }
