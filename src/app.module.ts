@@ -9,6 +9,7 @@ import { MongoConnectionString } from 'config/mongo.config';
 import { ContactsModule } from './contacts/contacts.module';
 import { MessagesModule } from './messages/messages.module';
 import { ChatsModule } from './chats/chats.module';
+import { ImagesModule } from './images/images.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { ChatsModule } from './chats/chats.module';
     ContactsModule,
     MessagesModule,
     ChatsModule,
+    ImagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
