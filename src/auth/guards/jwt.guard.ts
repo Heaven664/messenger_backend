@@ -1,11 +1,13 @@
 import {
   CanActivate,
   ExecutionContext,
+  Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
+@Injectable()
 export class JwtGuard implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}
 
@@ -24,7 +26,8 @@ export class JwtGuard implements CanActivate {
       });
       // Attach payload data to request object
       request['user'] = payload;
-    } catch {
+    } catch (error) {
+      console.log('error', error);
       // Throw error if token is invalid
       throw new UnauthorizedException();
     }
@@ -35,7 +38,7 @@ export class JwtGuard implements CanActivate {
   // Extract access token from request header
   private extractTokenFromHeader(request: Request) {
     // Extract token data from authorization header
-    const [type, token] = request.headers.authorization.split(' ');
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
     // Return token if type is Bearer
     return type === 'Bearer' ? token : undefined;
   }
