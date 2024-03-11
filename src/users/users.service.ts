@@ -37,10 +37,8 @@ export class UsersService {
 
     // Payload to be extracted from the client request
     const payload = {
-      username: user.email,
-      sub: {
-        name: user.name,
-      },
+      email: user.email,
+      id: user.id,
     };
     // User object to be returned to the client with initial password
     const returnUser = { ...user, password: initialPassword };
@@ -89,10 +87,8 @@ export class UsersService {
 
     // Payload to be extracted from the client request
     const payload = {
-      username: user.email,
-      sub: {
-        name: user.name,
-      },
+      email: user.email,
+      id: user.id,
     };
 
     return {
