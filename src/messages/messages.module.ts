@@ -8,7 +8,7 @@ import { UsersModule } from 'src/users/users.module';
 
 @Module({
   imports: [
-    UsersModule,
+    forwardRef(() => UsersModule),
     forwardRef(() => ChatsModule),
     MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
   ],

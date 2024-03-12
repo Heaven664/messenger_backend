@@ -10,14 +10,15 @@ import { ModuleRef } from '@nestjs/core';
 @Injectable()
 export class MessagesService implements OnModuleInit {
   private chatsService: ChatsService;
+  private usersService: UsersService;
   constructor(
     @InjectModel(Message.name) private messageModel: Model<Message>,
     private moduleRef: ModuleRef,
-    private usersService: UsersService,
   ) {}
 
   onModuleInit() {
     this.chatsService = this.moduleRef.get(ChatsService, { strict: false });
+    this.usersService = this.moduleRef.get(UsersService, { strict: false });
   }
 
   async addMessage(addMessageDto: AddMessageDto) {
@@ -78,6 +79,13 @@ export class MessagesService implements OnModuleInit {
     await this.messageModel.updateMany(
       { senderEmail: friendEmail, receiverEmail: userEmail },
       { viewed: true },
+    );
+  }
+
+  async updateUserAvatar(email: string, imageSrc: string) {
+    await this.messageModel.updateMany(
+      { senderEmail: email },
+      { senderImageUrl: imageSrc },
     );
   }
 }

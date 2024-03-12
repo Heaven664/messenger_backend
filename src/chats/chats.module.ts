@@ -9,7 +9,7 @@ import { MessagesModule } from 'src/messages/messages.module';
 @Module({
   imports: [
     forwardRef(() => MessagesModule),
-    UsersModule,
+    forwardRef(() => UsersModule),
     MongooseModule.forFeature([{ name: Chat.name, schema: ChatSchema }]),
   ],
   controllers: [ChatsController],

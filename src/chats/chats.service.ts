@@ -9,16 +9,17 @@ import { ModuleRef } from '@nestjs/core';
 @Injectable()
 export class ChatsService implements OnModuleInit {
   private messagesService: MessagesService;
+  private usersService: UsersService;
   constructor(
     @InjectModel(Chat.name) private chatModel: Model<Chat>,
     private moduleRef: ModuleRef,
-    private usersService: UsersService,
   ) {}
 
   onModuleInit() {
     this.messagesService = this.moduleRef.get(MessagesService, {
       strict: false,
     });
+    this.usersService = this.moduleRef.get(UsersService, { strict: false });
   }
 
   // Create new chat
@@ -126,5 +127,12 @@ export class ChatsService implements OnModuleInit {
     );
     await this.messagesService.readMessages(userEmail, friendEmail);
     return;
+  }
+
+  async updateUserAvatar(email: string, imageSrc: string) {
+    return await this.chatModel.updateMany(
+      { friendEmail: email },
+      { imageUrl: imageSrc },
+    );
   }
 }

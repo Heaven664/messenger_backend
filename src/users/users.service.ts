@@ -1,5 +1,5 @@
 import { JwtService } from '@nestjs/jwt';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { UserWithoutPassword } from './interfaces/user.interface';
 import createUser from './helpers/user.factory';
 import { InjectModel } from '@nestjs/mongoose';
@@ -11,13 +11,31 @@ import { comparePassword } from './helpers/validatePassword';
 import { InputErrorMessages } from 'src/common/enums/errorMessages.enum';
 import { TOKEN_EXPIRATION_TIME } from 'lib/constants';
 import { UpdateLastSeenDto, UpdateUserInfoDto } from './dto/user-dto';
+import { MessagesService } from 'src/messages/messages.service';
+import { ModuleRef } from '@nestjs/core';
+import { ChatsService } from 'src/chats/chats.service';
+import { ContactsService } from 'src/contacts/contacts.service';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
+  private messagesService: MessagesService;
+  private chatsService: ChatsService;
+  private contactsService: ContactsService;
   constructor(
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly jwtService: JwtService,
+    private moduleRef: ModuleRef,
   ) {}
+
+  onModuleInit() {
+    this.messagesService = this.moduleRef.get(MessagesService, {
+      strict: false,
+    });
+    this.chatsService = this.moduleRef.get(ChatsService, { strict: false });
+    this.contactsService = this.moduleRef.get(ContactsService, {
+      strict: false,
+    });
+  }
 
   async registerNewUser(userData: CreateUserDto) {
     // Create new user object with user factory
@@ -181,6 +199,13 @@ export class UsersService {
     };
   }
 
+  async updateUserAvatar(email: string, imageSrc: string) {
+    await this.userModel.findOneAndUpdate({ email }, { imageSrc });
+    await this.messagesService.updateUserAvatar(email, imageSrc);
+    await this.chatsService.updateUserAvatar(email, imageSrc);
+    await this.contactsService.updateUserAvatar(email, imageSrc);
+  }
+
   async updateLastSeenPermission(
     updateLastSeenDto: UpdateLastSeenDto,
   ): Promise<UserWithoutPassword> {
@@ -199,7 +224,6 @@ export class UsersService {
       lastSeenPermission,
       operationOptions,
     );
-
     // Return user data
     return {
       id: updatedInfo._id.toString(),

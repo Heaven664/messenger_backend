@@ -12,6 +12,7 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { UserWithoutPassword } from 'src/users/interfaces/user.interface';
 import { UpdateLastSeenDto, UpdateUserInfoDto } from './dto/user-dto';
@@ -56,7 +57,11 @@ export class UsersController {
       }),
     )
     file: Express.Multer.File,
+    @Req() req,
   ) {
+    const { email } = req.user;
+    const updatedImagePath = `http://localhost:3001/images/${file.filename}`;
+    await this.usersService.updateUserAvatar(email, updatedImagePath);
     return file.filename;
   }
 }

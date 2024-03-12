@@ -1,16 +1,22 @@
 import { UsersService } from './../users/users.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { AddContactDto, RemoveContactDto } from './dto/contact-dto';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { Contact } from './schemas/contact.schema';
 import { Model } from 'mongoose';
+import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
-export class ContactsService {
+export class ContactsService implements OnModuleInit {
+  private usersService: UsersService;
   constructor(
     @InjectModel(Contact.name) private contactModel: Model<Contact>,
-    private readonly usersService: UsersService,
+    private moduleRef: ModuleRef,
   ) {}
+
+  onModuleInit() {
+    this.usersService = this.moduleRef.get(UsersService, { strict: false });
+  }
 
   async findFriends(email: string) {
     // Find the user's friends
@@ -97,5 +103,11 @@ export class ContactsService {
 
     // Remove the friendship
     return await friendship.deleteOne();
+  }
+  async updateUserAvatar(email: string, imageSrc: string) {
+    return this.contactModel.updateMany(
+      { friendship: { $elemMatch: { email: email } } },
+      { $set: { 'friendship.$.imageSrc': imageSrc } },
+    );
   }
 }
