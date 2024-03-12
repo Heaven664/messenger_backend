@@ -31,11 +31,20 @@ export class UsersController {
     return this.usersService.findUserById(id);
   }
 
+  @UseGuards(JwtGuard)
   @Put('info')
   async updateInfo(
     @Body() updateInfo: UpdateUserInfoDto,
+    @Req() req,
   ): Promise<UserWithoutPassword> {
-    return this.usersService.updateUserInfo(updateInfo);
+    const { id } = updateInfo;
+    const { id: userJwtId, email } = req?.user;
+
+    // If provided id does not match with the user id in the token, throw an error
+    if (id !== userJwtId)
+      throw new UnauthorizedException('Can not recognize user');
+
+    return this.usersService.updateUserInfo(updateInfo, email);
   }
 
   @UseGuards(JwtGuard)

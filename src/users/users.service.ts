@@ -171,6 +171,7 @@ export class UsersService implements OnModuleInit {
 
   async updateUserInfo(
     updateUserInfoDto: UpdateUserInfoDto,
+    email: string,
   ): Promise<UserWithoutPassword> {
     // Destructure id and other data from updateUserDto
     const { id, ...newInfoValues } = updateUserInfoDto;
@@ -185,6 +186,14 @@ export class UsersService implements OnModuleInit {
       id,
       newInfoValues,
       operationOptions,
+    );
+
+    // Update last seen permission in chats and contacts
+    await this.chatsService.updateUserInfo(updatedInfo.name, email);
+    await this.contactsService.updateUserInfo(
+      updatedInfo.name,
+      email,
+      updatedInfo.residency,
     );
 
     // Return user data
@@ -211,8 +220,6 @@ export class UsersService implements OnModuleInit {
     id,
     lastSeenPermission,
   }): Promise<UserWithoutPassword> {
-    // Extract id and lastSeenPermission from updateLastSeenDto
-
     // Configure options for the update operation
     const operationOptions: QueryOptions = {
       new: true,

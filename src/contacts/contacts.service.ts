@@ -112,10 +112,26 @@ export class ContactsService implements OnModuleInit {
     );
   }
 
-  async updateLastSeenPermission(lastSeenPermission: boolean, email: string) {
+  async updateLastSeenPermission(email: string, lastSeenPermission: boolean) {
     return await this.contactModel.updateMany(
-      { 'friendship.email': email },
-      { $set: { 'friendship.$.lastSeenPermission': lastSeenPermission } },
+      {
+        'friendship.email': email,
+      },
+      {
+        $set: { 'friendship.$.lastSeenPermission': lastSeenPermission },
+      },
+    );
+  }
+
+  async updateUserInfo(name: string, email: string, residency: string) {
+    return await this.contactModel.updateMany(
+      { friendship: { $elemMatch: { email } } },
+      {
+        $set: {
+          'friendship.$.name': name,
+          'friendship.$.residency': residency,
+        },
+      },
     );
   }
 }

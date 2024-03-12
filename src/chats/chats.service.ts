@@ -142,4 +142,8 @@ export class ChatsService implements OnModuleInit {
       { lastSeenPermission },
     );
   }
+
+  async updateUserInfo(name: string, email: string) {
+    return await this.chatModel.updateMany({ friendEmail: email }, { name });
+  }
 }
