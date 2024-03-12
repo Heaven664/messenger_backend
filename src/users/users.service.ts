@@ -10,7 +10,7 @@ import { resolveDatabaseError } from './helpers/customDatabaseErrorHandler';
 import { comparePassword } from './helpers/validatePassword';
 import { InputErrorMessages } from 'src/common/enums/errorMessages.enum';
 import { TOKEN_EXPIRATION_TIME } from 'lib/constants';
-import { UpdateLastSeenDto, UpdateUserInfoDto } from './dto/user-dto';
+import { UpdateUserInfoDto } from './dto/user-dto';
 import { MessagesService } from 'src/messages/messages.service';
 import { ModuleRef } from '@nestjs/core';
 import { ChatsService } from 'src/chats/chats.service';
@@ -206,11 +206,12 @@ export class UsersService implements OnModuleInit {
     await this.contactsService.updateUserAvatar(email, imageSrc);
   }
 
-  async updateLastSeenPermission(
-    updateLastSeenDto: UpdateLastSeenDto,
-  ): Promise<UserWithoutPassword> {
+  async updateLastSeenPermission({
+    email,
+    id,
+    lastSeenPermission,
+  }): Promise<UserWithoutPassword> {
     // Extract id and lastSeenPermission from updateLastSeenDto
-    const { id, ...lastSeenPermission } = updateLastSeenDto;
 
     // Configure options for the update operation
     const operationOptions: QueryOptions = {
@@ -221,9 +222,20 @@ export class UsersService implements OnModuleInit {
     // Find user by id and change lastSeenPermission in database
     const updatedInfo = await this.userModel.findByIdAndUpdate(
       id,
-      lastSeenPermission,
+      { lastSeenPermission },
       operationOptions,
     );
+
+    // Update last seen permission in chats and contacts
+    await this.chatsService.updateLastSeenPermission(
+      updatedInfo.lastSeenPermission,
+      email,
+    );
+    await this.contactsService.updateLastSeenPermission(
+      lastSeenPermission,
+      email,
+    );
+
     // Return user data
     return {
       id: updatedInfo._id.toString(),

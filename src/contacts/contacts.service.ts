@@ -104,10 +104,18 @@ export class ContactsService implements OnModuleInit {
     // Remove the friendship
     return await friendship.deleteOne();
   }
+
   async updateUserAvatar(email: string, imageSrc: string) {
-    return this.contactModel.updateMany(
-      { friendship: { $elemMatch: { email: email } } },
+    return await this.contactModel.updateMany(
+      { 'friendship.email': email },
       { $set: { 'friendship.$.imageSrc': imageSrc } },
+    );
+  }
+
+  async updateLastSeenPermission(lastSeenPermission: boolean, email: string) {
+    return await this.contactModel.updateMany(
+      { 'friendship.email': email },
+      { $set: { 'friendship.$.lastSeenPermission': lastSeenPermission } },
     );
   }
 }

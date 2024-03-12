@@ -135,4 +135,11 @@ export class ChatsService implements OnModuleInit {
       { imageUrl: imageSrc },
     );
   }
+
+  async updateLastSeenPermission(lastSeenPermission: boolean, email: string) {
+    return await this.chatModel.updateMany(
+      { friendEmail: email },
+      { lastSeenPermission },
+    );
+  }
 }

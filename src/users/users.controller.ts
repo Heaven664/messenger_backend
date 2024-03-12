@@ -13,6 +13,7 @@ import {
   FileTypeValidator,
   UseGuards,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UserWithoutPassword } from 'src/users/interfaces/user.interface';
 import { UpdateLastSeenDto, UpdateUserInfoDto } from './dto/user-dto';
@@ -37,11 +38,24 @@ export class UsersController {
     return this.usersService.updateUserInfo(updateInfo);
   }
 
+  @UseGuards(JwtGuard)
   @Put('last-seen')
   async updateLastSeen(
     @Body() updateLastSeenDto: UpdateLastSeenDto,
+    @Req() req,
   ): Promise<UserWithoutPassword> {
-    return this.usersService.updateLastSeenPermission(updateLastSeenDto);
+    const { id } = updateLastSeenDto;
+    const { id: userJwtId, email } = req?.user;
+
+    // If provided id does not match with the user id in the token, throw an error
+    if (id !== userJwtId)
+      throw new UnauthorizedException('Can not recognize user');
+
+    return this.usersService.updateLastSeenPermission({
+      lastSeenPermission: updateLastSeenDto.lastSeenPermission,
+      id,
+      email,
+    });
   }
 
   @UseGuards(JwtGuard)
