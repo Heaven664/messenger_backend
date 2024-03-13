@@ -175,6 +175,13 @@ export class UsersService implements OnModuleInit {
     };
   }
 
+  /**
+   * Updates user info in all related collections within a transaction
+   * @param updateUserInfoDto A DTO with user data to update
+   * @param email A user email for queries
+   * @returns Updated user data
+   * @throws ConflictException if transaction fails
+   */
   async updateUserInfo(
     updateUserInfoDto: UpdateUserInfoDto,
     email: string,
@@ -187,31 +194,45 @@ export class UsersService implements OnModuleInit {
       lean: true,
     };
 
-    // Find and modify user by id in database
-    const updatedInfo = await this.userModel.findByIdAndUpdate(
-      id,
-      newInfoValues,
-      operationOptions,
-    );
+    const session = await this.connection.startSession();
+    session.startTransaction();
+    try {
+      // Find and modify user by id in database
+      const updatedInfo = await this.userModel
+        .findByIdAndUpdate(id, newInfoValues, operationOptions)
+        .session(session);
 
-    // Update last seen permission in chats and contacts
-    await this.chatsService.updateUserInfo(updatedInfo.name, email);
-    await this.contactsService.updateUserInfo(
-      updatedInfo.name,
-      email,
-      updatedInfo.residency,
-    );
+      // Update last seen permission in chats and contacts
+      await this.chatsService.updateUserInfo(updatedInfo.name, email, session);
+      await this.contactsService.updateUserInfo(
+        updatedInfo.name,
+        email,
+        updatedInfo.residency,
+        session,
+      );
 
-    // Return user data
-    return {
-      id: updatedInfo._id.toString(),
-      name: updatedInfo.name,
-      email: updatedInfo.email,
-      imageSrc: updatedInfo.imageSrc,
-      residency: updatedInfo.residency,
-      lastSeenPermission: updatedInfo.lastSeenPermission,
-      lastSeenTime: updatedInfo.lastSeenTime,
-    };
+      // Commit the transaction
+      await session.commitTransaction();
+
+      // Return user data
+      return {
+        id: updatedInfo._id.toString(),
+        name: updatedInfo.name,
+        email: updatedInfo.email,
+        imageSrc: updatedInfo.imageSrc,
+        residency: updatedInfo.residency,
+        lastSeenPermission: updatedInfo.lastSeenPermission,
+        lastSeenTime: updatedInfo.lastSeenTime,
+      };
+    } catch (error) {
+      console.log(error);
+      // Abort the transaction
+      await session.abortTransaction();
+      throw new ConflictException('Update failed');
+    } finally {
+      // End the session
+      session.endSession();
+    }
   }
 
   /**

@@ -149,15 +149,30 @@ export class ContactsService implements OnModuleInit {
       .session(session);
   }
 
-  async updateUserInfo(name: string, email: string, residency: string) {
-    return await this.contactModel.updateMany(
-      { friendship: { $elemMatch: { email } } },
-      {
-        $set: {
-          'friendship.$.name': name,
-          'friendship.$.residency': residency,
+  /**
+   * Updates user info in all contacts
+   * @param name New user name to update
+   * @param email User email for a query
+   * @param residency New residency to update
+   * @param session Optional session for a transaction, default is null
+   * @returns A return object for mongo updateMany operation
+   */
+  async updateUserInfo(
+    name: string,
+    email: string,
+    residency: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    return await this.contactModel
+      .updateMany(
+        { friendship: { $elemMatch: { email } } },
+        {
+          $set: {
+            'friendship.$.name': name,
+            'friendship.$.residency': residency,
+          },
         },
-      },
-    );
+      )
+      .session(session);
   }
 }

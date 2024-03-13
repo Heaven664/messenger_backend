@@ -163,7 +163,20 @@ export class ChatsService implements OnModuleInit {
       .session(session);
   }
 
-  async updateUserInfo(name: string, email: string) {
-    return await this.chatModel.updateMany({ friendEmail: email }, { name });
+  /**
+   * Updates user info in all chats
+   * @param name New user name to update
+   * @param email An email of a user for a query
+   * @param session Optional session for a transaction, default is null
+   * @returns A return object for mongo updateMany operation
+   */
+  async updateUserInfo(
+    name: string,
+    email: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    return await this.chatModel
+      .updateMany({ friendEmail: email }, { name })
+      .session(session);
   }
 }
