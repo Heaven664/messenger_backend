@@ -125,15 +125,28 @@ export class ContactsService implements OnModuleInit {
       .session(session);
   }
 
-  async updateLastSeenPermission(email: string, lastSeenPermission: boolean) {
-    return await this.contactModel.updateMany(
-      {
-        'friendship.email': email,
-      },
-      {
-        $set: { 'friendship.$.lastSeenPermission': lastSeenPermission },
-      },
-    );
+  /**
+   * Updates last seen permission in all contacts
+   * @param email Email for a query
+   * @param lastSeenPermission New last seen permission value to update
+   * @param session Optional session for a transaction, default is null
+   * @returns A return object for mongo updateMany operation
+   */
+  async updateLastSeenPermission(
+    lastSeenPermission: boolean,
+    email: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    return await this.contactModel
+      .updateMany(
+        {
+          'friendship.email': email,
+        },
+        {
+          $set: { 'friendship.$.lastSeenPermission': lastSeenPermission },
+        },
+      )
+      .session(session);
   }
 
   async updateUserInfo(name: string, email: string, residency: string) {

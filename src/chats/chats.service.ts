@@ -146,11 +146,21 @@ export class ChatsService implements OnModuleInit {
       .session(session);
   }
 
-  async updateLastSeenPermission(lastSeenPermission: boolean, email: string) {
-    return await this.chatModel.updateMany(
-      { friendEmail: email },
-      { lastSeenPermission },
-    );
+  /**
+   * Updates last seen permission in all chats
+   * @param lastSeenPermission new last seen permission value to update
+   * @param email user email for a query
+   * @param session optional session for a transaction, default is null
+   * @returns a return object for mongo updateMany operation
+   */
+  async updateLastSeenPermission(
+    lastSeenPermission: boolean,
+    email: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    return await this.chatModel
+      .updateMany({ friendEmail: email }, { lastSeenPermission })
+      .session(session);
   }
 
   async updateUserInfo(name: string, email: string) {

@@ -1,5 +1,10 @@
 import { JwtService } from '@nestjs/jwt';
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  OnModuleInit,
+} from '@nestjs/common';
 import { UserWithoutPassword } from './interfaces/user.interface';
 import createUser from './helpers/user.factory';
 import { InjectConnection, InjectModel } from '@nestjs/mongoose';
@@ -231,6 +236,12 @@ export class UsersService implements OnModuleInit {
     session.endSession();
   }
 
+  /**
+   * Updates last seen permission in all related collections within a transaction
+   * @param object An object with user email and lastSeenPermission
+   * @returns A user object with updated lastSeenPermission
+   * @throws ConflictException if transaction fails
+   */
   async updateLastSeenPermission({
     email,
     id,
@@ -242,32 +253,46 @@ export class UsersService implements OnModuleInit {
       lean: true,
     };
 
-    // Find user by id and change lastSeenPermission in database
-    const updatedInfo = await this.userModel.findByIdAndUpdate(
-      id,
-      { lastSeenPermission },
-      operationOptions,
-    );
+    const session = await this.connection.startSession();
+    session.startTransaction();
 
-    // Update last seen permission in chats and contacts
-    await this.chatsService.updateLastSeenPermission(
-      updatedInfo.lastSeenPermission,
-      email,
-    );
-    await this.contactsService.updateLastSeenPermission(
-      lastSeenPermission,
-      email,
-    );
+    try {
+      // Find user by id and change lastSeenPermission in database
+      const updatedInfo = await this.userModel
+        .findByIdAndUpdate(id, { lastSeenPermission }, operationOptions)
+        .session(session);
 
-    // Return user data
-    return {
-      id: updatedInfo._id.toString(),
-      name: updatedInfo.name,
-      email: updatedInfo.email,
-      imageSrc: updatedInfo.imageSrc,
-      residency: updatedInfo.residency,
-      lastSeenPermission: updatedInfo.lastSeenPermission,
-      lastSeenTime: updatedInfo.lastSeenTime,
-    };
+      // Update last seen permission in chats and contacts
+      await this.chatsService.updateLastSeenPermission(
+        lastSeenPermission,
+        email,
+        session,
+      );
+      await this.contactsService.updateLastSeenPermission(
+        lastSeenPermission,
+        email,
+        session,
+      );
+
+      // Commit the transaction
+      await session.commitTransaction();
+
+      // Return user data
+      return {
+        id: updatedInfo._id.toString(),
+        name: updatedInfo.name,
+        email: updatedInfo.email,
+        imageSrc: updatedInfo.imageSrc,
+        residency: updatedInfo.residency,
+        lastSeenPermission: updatedInfo.lastSeenPermission,
+        lastSeenTime: updatedInfo.lastSeenTime,
+      };
+    } catch (error) {
+      console.log(error);
+      await session.abortTransaction();
+      throw new ConflictException('Update failed');
+    } finally {
+      session.endSession();
+    }
   }
 }
