@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Chat } from './schema/chats.schema';
 import mongoose, { Model } from 'mongoose';
 import { UsersService } from 'src/users/users.service';
@@ -13,6 +13,7 @@ export class ChatsService implements OnModuleInit {
   constructor(
     @InjectModel(Chat.name) private chatModel: Model<Chat>,
     private moduleRef: ModuleRef,
+    @InjectConnection() private readonly connection: mongoose.Connection,
   ) {}
 
   onModuleInit() {
@@ -120,13 +121,27 @@ export class ChatsService implements OnModuleInit {
       { lastMessage: lastMessageTime },
     );
   }
+
+  /**
+   * Clears unread messages and updates all messages as read
+   * @param userEmail User email for a query
+   * @param friendEmail Friend email for a query
+   */
   async clearUnreadMessages(userEmail: string, friendEmail: string) {
-    await this.chatModel.findOneAndUpdate(
-      { userEmail, friendEmail },
-      { unreadMessages: 0 },
-    );
-    await this.messagesService.readMessages(userEmail, friendEmail);
-    return;
+    // Start session
+    const session = await this.connection.startSession();
+
+    // Start transaction
+    await session.withTransaction(async () => {
+      // Update unread messages and read all messages in a chat
+      await this.chatModel
+        .findOneAndUpdate({ userEmail, friendEmail }, { unreadMessages: 0 })
+        .session(session);
+      await this.messagesService.readMessages(userEmail, friendEmail, session);
+    });
+
+    // End session
+    session.endSession();
   }
 
   /**

@@ -75,11 +75,23 @@ export class MessagesService implements OnModuleInit {
     return messages;
   }
 
-  async readMessages(userEmail: string, friendEmail: string) {
-    await this.messageModel.updateMany(
-      { senderEmail: friendEmail, receiverEmail: userEmail },
-      { viewed: true },
-    );
+  /**
+   * Updates messages as viewed
+   * @param userEmail User email to for a query
+   * @param friendEmail Friend email for a query
+   * @param session Optional session for a transaction, default is null
+   */
+  async readMessages(
+    userEmail: string,
+    friendEmail: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    await this.messageModel
+      .updateMany(
+        { senderEmail: friendEmail, receiverEmail: userEmail },
+        { viewed: true },
+      )
+      .session(session);
   }
 
   /**
