@@ -21,7 +21,7 @@ export class RefreshJwtGuard implements CanActivate {
     if (!token) throw new UnauthorizedException();
     try {
       // Verify token
-      const payload = this.jwtService.verifyAsync(token, {
+      const payload = await this.jwtService.verifyAsync(token, {
         secret: process.env.JWT_REFRESH_TOKEN,
       });
       // Attach payload data to request object
@@ -37,7 +37,7 @@ export class RefreshJwtGuard implements CanActivate {
   // Extract refresh token from request header
   private extractTokenFromHeader(request: Request) {
     // Extract token data from authorization header
-    const [type, token] = request.headers.authorization.split(' ');
+    const [type, token] = request.headers.authorization?.split(' ') || [];
     // Return token if type is Refresh
     return type === 'Refresh' ? token : undefined;
   }
