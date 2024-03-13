@@ -2,9 +2,9 @@ import { JwtService } from '@nestjs/jwt';
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { UserWithoutPassword } from './interfaces/user.interface';
 import createUser from './helpers/user.factory';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
-import { Model, QueryOptions } from 'mongoose';
+import mongoose, { Model, QueryOptions } from 'mongoose';
 import { CreateUserDto, LoginUserDto } from 'src/shared/dto/create-user.dto';
 import { resolveDatabaseError } from './helpers/customDatabaseErrorHandler';
 import { comparePassword } from './helpers/validatePassword';
@@ -25,6 +25,7 @@ export class UsersService implements OnModuleInit {
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly jwtService: JwtService,
     private moduleRef: ModuleRef,
+    @InjectConnection() private readonly connection: mongoose.Connection,
   ) {}
 
   onModuleInit() {
@@ -208,11 +209,26 @@ export class UsersService implements OnModuleInit {
     };
   }
 
+  /**
+   * Updates a user avatar in all related collections within a transaction
+   * @param email An email address of a user to update
+   * @param imageSrc New image source to update
+   */
   async updateUserAvatar(email: string, imageSrc: string) {
-    await this.userModel.findOneAndUpdate({ email }, { imageSrc });
-    await this.messagesService.updateUserAvatar(email, imageSrc);
-    await this.chatsService.updateUserAvatar(email, imageSrc);
-    await this.contactsService.updateUserAvatar(email, imageSrc);
+    // Start a session
+    const session = await this.connection.startSession();
+
+    // Update imageSrc in user, messages, chats and contacts within a transaction
+    await session.withTransaction(async () => {
+      await this.userModel
+        .findOneAndUpdate({ email }, { imageSrc })
+        .session(session);
+      await this.messagesService.updateUserAvatar(email, imageSrc, session);
+      await this.chatsService.updateUserAvatar(email, imageSrc, session);
+      await this.contactsService.updateUserAvatar(email, imageSrc, session);
+    });
+    // End the session
+    session.endSession();
   }
 
   async updateLastSeenPermission({

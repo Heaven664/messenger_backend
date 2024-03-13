@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { AddContactDto, RemoveContactDto } from './dto/contact-dto';
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { Contact } from './schemas/contact.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
@@ -105,11 +105,24 @@ export class ContactsService implements OnModuleInit {
     return await friendship.deleteOne();
   }
 
-  async updateUserAvatar(email: string, imageSrc: string) {
-    return await this.contactModel.updateMany(
-      { 'friendship.email': email },
-      { $set: { 'friendship.$.imageSrc': imageSrc } },
-    );
+  /**
+   * Updates user avatar in all contacts
+   * @param email email for a query
+   * @param imageSrc image source to update the value
+   * @param session optional session for a transaction, default is null
+   * @returns a return object for mongo updateMany operation
+   */
+  async updateUserAvatar(
+    email: string,
+    imageSrc: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    return await this.contactModel
+      .updateMany(
+        { 'friendship.email': email },
+        { $set: { 'friendship.$.imageSrc': imageSrc } },
+      )
+      .session(session);
   }
 
   async updateLastSeenPermission(email: string, lastSeenPermission: boolean) {

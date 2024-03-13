@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { AddMessageDto, GetMessageDto } from './dto/message-dto';
 import { Message } from './schema/message.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { ChatsService } from 'src/chats/chats.service';
 import { UsersService } from 'src/users/users.service';
@@ -82,10 +82,19 @@ export class MessagesService implements OnModuleInit {
     );
   }
 
-  async updateUserAvatar(email: string, imageSrc: string) {
-    await this.messageModel.updateMany(
-      { senderEmail: email },
-      { senderImageUrl: imageSrc },
-    );
+  /**
+   * Updates user avatar in all messages
+   * @param email user email for a query
+   * @param imageSrc image source to update the value
+   * @param session optional session for a transaction, default is null
+   */
+  async updateUserAvatar(
+    email: string,
+    imageSrc: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    await this.messageModel
+      .updateMany({ senderEmail: email }, { senderImageUrl: imageSrc })
+      .session(session);
   }
 }

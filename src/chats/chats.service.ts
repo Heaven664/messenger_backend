@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Chat } from './schema/chats.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { UsersService } from 'src/users/users.service';
 import { MessagesService } from 'src/messages/messages.service';
 import { ModuleRef } from '@nestjs/core';
@@ -129,11 +129,21 @@ export class ChatsService implements OnModuleInit {
     return;
   }
 
-  async updateUserAvatar(email: string, imageSrc: string) {
-    return await this.chatModel.updateMany(
-      { friendEmail: email },
-      { imageUrl: imageSrc },
-    );
+  /**
+   * Updates user avatar in all chats
+   * @param email user email for a query
+   * @param imageSrc image source to update the value
+   * @param session session for a transaction, default is null
+   * @returns a return object for mongo updateMany operation
+   */
+  async updateUserAvatar(
+    email: string,
+    imageSrc: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    return await this.chatModel
+      .updateMany({ friendEmail: email }, { imageUrl: imageSrc })
+      .session(session);
   }
 
   async updateLastSeenPermission(lastSeenPermission: boolean, email: string) {
