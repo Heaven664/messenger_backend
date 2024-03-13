@@ -33,6 +33,7 @@ export class UsersService implements OnModuleInit {
     @InjectConnection() private readonly connection: mongoose.Connection,
   ) {}
 
+  // Get module references to avoid circular dependencies
   onModuleInit() {
     this.messagesService = this.moduleRef.get(MessagesService, {
       strict: false,
@@ -43,6 +44,12 @@ export class UsersService implements OnModuleInit {
     });
   }
 
+  /**
+   * Registers a new user and returns user data and access and refresh tokens
+   * @param userData User data to register
+   * @returns User data and access and refresh tokens
+   * @throws BadRequestException if user already exists or database error
+   */
   async registerNewUser(userData: CreateUserDto) {
     // Create new user object with user factory
     const user = await createUser(userData);
@@ -59,17 +66,18 @@ export class UsersService implements OnModuleInit {
       resolveDatabaseError(error.code);
     }
 
-    // Payload to be extracted from the client request
+    // Generate JWT payload
     const payload = {
       email: user.email,
       id: user.id,
     };
+
     // User object to be returned to the client with initial password
     const returnUser = { ...user, password: initialPassword };
 
+    // Return user data and with access and refresh tokens
     return {
       user: returnUser,
-      // Generate access and refresh tokens
       backendTokens: {
         accessToken: await this.jwtService.signAsync(payload, {
           expiresIn: '1h',
@@ -86,6 +94,12 @@ export class UsersService implements OnModuleInit {
     };
   }
 
+  /**
+   * Logs in a user and returns user data and access and refresh tokens
+   * @param userData User data to login
+   * @returns An object with user data and access and refresh tokens
+   * @throws BadRequestException if user not found or password is invalid
+   */
   async loginUser(userData: LoginUserDto) {
     // Find user by email in database
     const user = await this.userModel.findOne({ email: userData.email });
@@ -109,15 +123,15 @@ export class UsersService implements OnModuleInit {
       lastSeenTime: user.lastSeenTime,
     };
 
-    // Payload to be extracted from the client request
+    // Generate JWT payload
     const payload = {
       email: user.email,
       id: user.id,
     };
 
+    // Return user data and with access and refresh tokens
     return {
       user: returnUserData,
-      // Generate access and refresh tokens
       backendTokens: {
         accessToken: await this.jwtService.signAsync(payload, {
           expiresIn: '1h',
@@ -134,6 +148,12 @@ export class UsersService implements OnModuleInit {
     };
   }
 
+  /**
+   * Finds a user by id and returns a user object without password property
+   * @param id A user id for a query
+   * @returns A user object without password property
+   * @throws BadRequestException if user not found
+   */
   async findUserById(id: string): Promise<UserWithoutPassword> {
     // Find user by id in database
     const user = await this.userModel.findById(id);
@@ -155,6 +175,12 @@ export class UsersService implements OnModuleInit {
     };
   }
 
+  /**
+   * Finds a user by email and returns a user object without password property
+   * @param email A user email for a query
+   * @returns A user object without password property
+   * @throws BadRequestException if user not found
+   */
   async findUserByEmail(email: string): Promise<UserWithoutPassword> {
     const user = await this.userModel.findOne({ email });
 
@@ -186,15 +212,18 @@ export class UsersService implements OnModuleInit {
     updateUserInfoDto: UpdateUserInfoDto,
     email: string,
   ): Promise<UserWithoutPassword> {
-    // Destructure id and other data from updateUserDto
     const { id, ...newInfoValues } = updateUserInfoDto;
+
     // Configure options for the update operation
     const operationOptions: QueryOptions = {
       new: true,
       lean: true,
     };
 
+    // Start a session
     const session = await this.connection.startSession();
+
+    // Start a transaction
     session.startTransaction();
     try {
       // Find and modify user by id in database
@@ -274,7 +303,10 @@ export class UsersService implements OnModuleInit {
       lean: true,
     };
 
+    // Start a session
     const session = await this.connection.startSession();
+
+    // Start a transaction
     session.startTransaction();
 
     try {
@@ -310,9 +342,11 @@ export class UsersService implements OnModuleInit {
       };
     } catch (error) {
       console.log(error);
+      // Abort the transaction
       await session.abortTransaction();
       throw new ConflictException('Update failed');
     } finally {
+      // End the session
       session.endSession();
     }
   }
