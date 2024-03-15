@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { AddMessageDto, GetMessageDto } from './dto/message-dto';
 import { Message } from './schema/message.schema';
 import mongoose, { Model } from 'mongoose';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { ChatsService } from 'src/chats/chats.service';
 import { UsersService } from 'src/users/users.service';
 import { ModuleRef } from '@nestjs/core';
@@ -14,6 +14,7 @@ export class MessagesService implements OnModuleInit {
   constructor(
     @InjectModel(Message.name) private messageModel: Model<Message>,
     private moduleRef: ModuleRef,
+    @InjectConnection() private readonly connection: mongoose.Connection,
   ) {}
 
   onModuleInit() {
@@ -37,17 +38,25 @@ export class MessagesService implements OnModuleInit {
       // Create a new chat
       await this.chatsService.createChat(sentTime, senderEmail, receiverEmail);
     } else {
-      // Increase unread messages
-      await this.chatsService.increaseUnreadMessages(
-        senderEmail,
-        receiverEmail,
-      );
-      // Update last message time
-      await this.chatsService.updateLastMessage(
-        senderEmail,
-        receiverEmail,
-        sentTime,
-      );
+      // Start mongo session
+      const session = await this.connection.startSession();
+
+      // Start transaction
+      session.withTransaction(async () => {
+        // Increase unread messages
+        await this.chatsService.increaseUnreadMessages(
+          senderEmail,
+          receiverEmail,
+        );
+        // Update last message time
+        await this.chatsService.updateLastMessage(
+          senderEmail,
+          receiverEmail,
+          sentTime,
+        );
+      });
+      // End session
+      session.endSession();
     }
 
     const newMessage = new this.messageModel(addMessageDto);

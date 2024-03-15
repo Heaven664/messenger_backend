@@ -84,9 +84,18 @@ export class ChatsService implements OnModuleInit {
       lastSeenTime: userLastSeenTime,
     });
 
-    // Create a char for user and friend
-    await secondChatData.save();
-    return await firstChatData.save();
+    // Start session
+    const session = await this.connection.startSession();
+
+    // Create new chats within a transaction
+    await session.withTransaction(async () => {
+      // Create chats for user and friend
+      await secondChatData.save();
+      await firstChatData.save();
+    });
+
+    // End session
+    session.endSession();
   }
 
   async findChatByEmail(userEmail: string, friendEmail: string) {
