@@ -75,7 +75,7 @@ export class UsersController {
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: FOUR_MB_IN_BYTES }),
-          new FileTypeValidator({ fileType: /image.(png|jpeg|heic|webp)$/ }),
+          new FileTypeValidator({ fileType: /image.(png|jpeg|webp)$/ }),
         ],
       }),
     )
@@ -83,8 +83,8 @@ export class UsersController {
     @Req() req,
   ) {
     const { email } = req.user;
-    const updatedImagePath = `http://localhost:3001/images/${file.filename}`;
+    const updatedImagePath = `/images/${file.filename}`;
     await this.usersService.updateUserAvatar(email, updatedImagePath);
-    return file.filename;
+    return updatedImagePath;
   }
 }
