@@ -1,3 +1,4 @@
+import { MessagesService } from './messages.service';
 import {
   ConnectedSocket,
   MessageBody,
@@ -15,6 +16,8 @@ import { AddMessageDto } from './dto/message-dto';
 export class MessagesGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
+  constructor(private messagesService: MessagesService) {}
+
   @WebSocketServer()
   server: Server;
 
@@ -37,5 +40,16 @@ export class MessagesGateway
     // Send the message to the receiver and the sender
     this.server.to(message.receiverEmail).emit('private message', message);
     this.server.to(message.senderEmail).emit('private message', message);
+  }
+
+  @SubscribeMessage('message read')
+  async onReadMessage(
+    @MessageBody('senderEmail') senderEmail: string,
+    @MessageBody('receiverEmail') receiverEmail: string,
+  ) {
+    // Read the messages in the database
+    await this.messagesService.readMessages(receiverEmail, senderEmail);
+    // Send the message read event to the sender
+    this.server.to(senderEmail).emit('message read', receiverEmail);
   }
 }
