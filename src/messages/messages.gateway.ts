@@ -27,13 +27,15 @@ export class MessagesGateway
   }
 
   @SubscribeMessage('join')
-  onJoin(@MessageBody() data: string, @ConnectedSocket() client: Socket) {
+  onJoin(@MessageBody() email: string, @ConnectedSocket() client: Socket) {
     // Join the room with the client email address
-    client.join(data);
+    client.join(email);
   }
 
   @SubscribeMessage('private message')
   onPrivateMessage(@MessageBody() message: AddMessageDto) {
+    // Send the message to the receiver and the sender
     this.server.to(message.receiverEmail).emit('private message', message);
+    this.server.to(message.senderEmail).emit('private message', message);
   }
 }
