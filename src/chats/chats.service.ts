@@ -132,25 +132,16 @@ export class ChatsService implements OnModuleInit {
   }
 
   /**
-   * Clears unread messages and updates all messages as read
+   * Clears unread messages
    * @param userEmail User email for a query
    * @param friendEmail Friend email for a query
    */
   async clearUnreadMessages(userEmail: string, friendEmail: string) {
-    // Start session
-    const session = await this.connection.startSession();
-
-    // Start transaction
-    await session.withTransaction(async () => {
-      // Update unread messages and read all messages in a chat
-      await this.chatModel
-        .findOneAndUpdate({ userEmail, friendEmail }, { unreadMessages: 0 })
-        .session(session);
-      await this.messagesService.readMessages(userEmail, friendEmail, session);
-    });
-
-    // End session
-    session.endSession();
+    // Update unread messages
+    await this.chatModel.findOneAndUpdate(
+      { userEmail, friendEmail },
+      { unreadMessages: 0 },
+    );
   }
 
   /**
