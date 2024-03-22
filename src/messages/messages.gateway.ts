@@ -38,8 +38,14 @@ export class MessagesGateway
     console.log('client connected', client.id);
   }
 
-  handleDisconnect(client: Socket) {
+  async handleDisconnect(client: Socket) {
     console.log('client disconnected', client.id);
+    // Send the offline event to the contacts
+    const chats = await this.chatsService.findAllChats(client.data.email);
+    const contacts = chats.map((chat: Chat) => chat.friendEmail);
+    for (const contact of contacts) {
+      this.server.to(contact).emit('friend offline', client.data.email);
+    }
   }
 
   @SubscribeMessage('join')
@@ -49,6 +55,9 @@ export class MessagesGateway
   ) {
     // Join the room with the client email address
     client.join(email);
+    // Save the email address in the client data
+    client.data.email = email;
+    // Send the online event to the contacts
     const chats = await this.chatsService.findAllChats(email);
     const contacts = chats.map((chat: Chat) => chat.friendEmail);
     for (const contact of contacts) {
