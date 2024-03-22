@@ -7,6 +7,7 @@ export interface User {
   residency: string | null;
   lastSeenPermission: boolean;
   lastSeenTime: number | null;
+  isOnline: boolean;
 }
 
 export type UserWithoutPassword = Omit<User, 'password'>;

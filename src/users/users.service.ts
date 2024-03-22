@@ -120,6 +120,7 @@ export class UsersService implements OnModuleInit {
       imageSrc: user.imageSrc,
       residency: user.residency,
       lastSeenPermission: user.lastSeenPermission,
+      isOnline: true,
       lastSeenTime: user.lastSeenTime,
     };
 
@@ -172,6 +173,7 @@ export class UsersService implements OnModuleInit {
       residency: user.residency,
       lastSeenPermission: user.lastSeenPermission,
       lastSeenTime: user.lastSeenTime,
+      isOnline: user.isOnline,
     };
   }
 
@@ -198,6 +200,7 @@ export class UsersService implements OnModuleInit {
       residency: user.residency,
       lastSeenPermission: user.lastSeenPermission,
       lastSeenTime: user.lastSeenTime,
+      isOnline: user.isOnline,
     };
   }
 
@@ -252,6 +255,7 @@ export class UsersService implements OnModuleInit {
         residency: updatedInfo.residency,
         lastSeenPermission: updatedInfo.lastSeenPermission,
         lastSeenTime: updatedInfo.lastSeenTime,
+        isOnline: updatedInfo.isOnline,
       };
     } catch (error) {
       console.log(error);
@@ -339,6 +343,7 @@ export class UsersService implements OnModuleInit {
         residency: updatedInfo.residency,
         lastSeenPermission: updatedInfo.lastSeenPermission,
         lastSeenTime: updatedInfo.lastSeenTime,
+        isOnline: updatedInfo.isOnline,
       };
     } catch (error) {
       console.log(error);
@@ -349,5 +354,13 @@ export class UsersService implements OnModuleInit {
       // End the session
       session.endSession();
     }
+  }
+
+  async makeUserOnline(email: string) {
+    await this.userModel.findOneAndUpdate({ email }, { isOnline: true });
+  }
+
+  async makeUserOffline(email: string) {
+    await this.userModel.findOneAndUpdate({ email }, { isOnline: false });
   }
 }

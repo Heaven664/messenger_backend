@@ -22,6 +22,7 @@ export const createUser = async (userData: CreateUserDto): Promise<User> => {
   const imageSrc = `/images/default-profile-image.webp`;
   const residency = null;
   const lastSeenPermission = true;
+  const isOnline = false;
   const lastSeenTime = new Date().getTime();
 
   // Create new user object
@@ -33,6 +34,7 @@ export const createUser = async (userData: CreateUserDto): Promise<User> => {
     residency,
     lastSeenPermission,
     lastSeenTime,
+    isOnline,
     password: hashedPassword,
   };
 

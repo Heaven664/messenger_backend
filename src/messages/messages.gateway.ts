@@ -1,3 +1,4 @@
+import { UsersService } from 'src/users/users.service';
 import { MessagesService } from './messages.service';
 import {
   ConnectedSocket,
@@ -21,6 +22,7 @@ export class MessagesGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
 {
   private chatsService: ChatsService;
+  private UsersService: UsersService;
 
   constructor(
     private messagesService: MessagesService,
@@ -29,6 +31,7 @@ export class MessagesGateway
 
   onModuleInit() {
     this.chatsService = this.moduleRef.get(ChatsService, { strict: false });
+    this.UsersService = this.moduleRef.get(UsersService, { strict: false });
   }
 
   @WebSocketServer()
@@ -39,13 +42,15 @@ export class MessagesGateway
   }
 
   async handleDisconnect(client: Socket) {
-    console.log('client disconnected', client.id);
+    // Update user offline status in database
+    await this.UsersService.makeUserOffline(client.data.email);
     // Send the offline event to the contacts
     const chats = await this.chatsService.findAllChats(client.data.email);
     const contacts = chats.map((chat: Chat) => chat.friendEmail);
     for (const contact of contacts) {
       this.server.to(contact).emit('friend offline', client.data.email);
     }
+    console.log('client disconnected', client.id);
   }
 
   @SubscribeMessage('join')
@@ -57,6 +62,8 @@ export class MessagesGateway
     client.join(email);
     // Save the email address in the client data
     client.data.email = email;
+    // Update user online status in database
+    await this.UsersService.makeUserOnline(email);
     // Send the online event to the contacts
     const chats = await this.chatsService.findAllChats(email);
     const contacts = chats.map((chat: Chat) => chat.friendEmail);
