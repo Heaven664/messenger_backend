@@ -11,12 +11,25 @@ import {
 import { corsOptions } from 'config/cors.config';
 import { Socket, Server } from 'socket.io';
 import { AddMessageDto } from './dto/message-dto';
+import { ChatsService } from 'src/chats/chats.service';
+import { ModuleRef } from '@nestjs/core';
+import { OnModuleInit } from '@nestjs/common';
+import { Chat } from 'src/chats/schema/chats.schema';
 
 @WebSocketGateway({ cors: corsOptions })
 export class MessagesGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
 {
-  constructor(private messagesService: MessagesService) {}
+  private chatsService: ChatsService;
+
+  constructor(
+    private messagesService: MessagesService,
+    private moduleRef: ModuleRef,
+  ) {}
+
+  onModuleInit() {
+    this.chatsService = this.moduleRef.get(ChatsService, { strict: false });
+  }
 
   @WebSocketServer()
   server: Server;
@@ -30,9 +43,17 @@ export class MessagesGateway
   }
 
   @SubscribeMessage('join')
-  onJoin(@MessageBody() email: string, @ConnectedSocket() client: Socket) {
+  async onJoin(
+    @MessageBody() email: string,
+    @ConnectedSocket() client: Socket,
+  ) {
     // Join the room with the client email address
     client.join(email);
+    const chats = await this.chatsService.findAllChats(email);
+    const contacts = chats.map((chat: Chat) => chat.friendEmail);
+    for (const contact of contacts) {
+      this.server.to(contact).emit('friend online', email);
+    }
   }
 
   @SubscribeMessage('private message')
@@ -50,6 +71,6 @@ export class MessagesGateway
     // Read the messages in the database
     await this.messagesService.readMessages(receiverEmail, senderEmail);
     // Send the message read event to the sender
-    this.server.to(senderEmail).emit('message read', receiverEmail);
+    this.server.to(senderEmail).emit('message read');
   }
 }
