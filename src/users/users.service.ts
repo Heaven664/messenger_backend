@@ -360,7 +360,10 @@ export class UsersService implements OnModuleInit {
     await this.userModel.findOneAndUpdate({ email }, { isOnline: true });
   }
 
-  async makeUserOffline(email: string) {
-    await this.userModel.findOneAndUpdate({ email }, { isOnline: false });
+  async makeUserOffline(email: string, lastSeenTimeStamp: number) {
+    await this.userModel.findOneAndUpdate(
+      { email },
+      { isOnline: false, lastSeenTime: lastSeenTimeStamp },
+    );
   }
 }

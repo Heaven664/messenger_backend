@@ -44,11 +44,12 @@ export class MessagesGateway
   async handleDisconnect(client: Socket) {
     const disconnectionTimestamp = new Date().getTime();
     // Update user offline status in users collection
-    await this.UsersService.makeUserOffline(client.data.email);
-    // Update user activity status in chats collections
-    await this.chatsService.makeUserOffline(client.data.email);
-    // Update last seen time in chats collections
-    await this.chatsService.updateLastSeenTime(
+    await this.UsersService.makeUserOffline(
+      client.data.email,
+      disconnectionTimestamp,
+    );
+    // Update user activity status in chats collections and update last seen time
+    await this.chatsService.makeUserOffline(
       client.data.email,
       disconnectionTimestamp,
     );

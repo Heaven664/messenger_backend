@@ -206,20 +206,10 @@ export class ChatsService implements OnModuleInit {
     );
   }
 
-  async makeUserOffline(userEmail: string) {
+  async makeUserOffline(userEmail: string, disconnectionTimestamp: number) {
     return await this.chatModel.updateMany(
       { friendEmail: userEmail },
-      { isOnline: true },
-    );
-  }
-
-  async updateLastSeenTime(
-    friendEmail: string,
-    disconnectionTimestamp: number,
-  ) {
-    return await this.chatModel.updateMany(
-      { friendEmail },
-      { lastSeenTime: disconnectionTimestamp },
+      { isOnline: false, lastSeenTime: disconnectionTimestamp },
     );
   }
 }
