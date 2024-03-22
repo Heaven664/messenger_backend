@@ -51,6 +51,9 @@ export class MessagesGateway
     const contacts = chats.map((chat: Chat) => chat.friendEmail);
     for (const contact of contacts) {
       this.server.to(contact).emit('friend offline', client.data.email);
+      this.server
+        .to(contact)
+        .emit('check header offline status', client.data.email);
     }
     console.log('client disconnected', client.id);
   }
@@ -73,6 +76,7 @@ export class MessagesGateway
     const contacts = chats.map((chat: Chat) => chat.friendEmail);
     for (const contact of contacts) {
       this.server.to(contact).emit('friend online', email);
+      this.server.to(contact).emit('check header online status', email);
     }
   }
 
