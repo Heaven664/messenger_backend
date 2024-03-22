@@ -41,6 +41,7 @@ export class ChatsService implements OnModuleInit {
       imageSrc: userImage,
       lastSeenTime: userLastSeenTime,
       lastSeenPermission: userLastSeenPermission,
+      isOnline: userOnlineStatus,
     } = user;
 
     // Destructure friend data
@@ -51,6 +52,7 @@ export class ChatsService implements OnModuleInit {
       imageSrc: friendImage,
       lastSeenPermission: friendLastSeenPermission,
       lastSeenTime: friendLastSeenTime,
+      isOnline: friendOnlineStatus,
     } = friend;
 
     // Check if user and friend exist
@@ -69,6 +71,7 @@ export class ChatsService implements OnModuleInit {
       unreadMessages: 0,
       lastSeenPermission: friendLastSeenPermission,
       lastSeenTime: friendLastSeenTime,
+      isOnline: friendOnlineStatus,
     });
 
     // Create chat data for a user
@@ -82,6 +85,7 @@ export class ChatsService implements OnModuleInit {
       unreadMessages: 1,
       lastSeenPermission: userLastSeenPermission,
       lastSeenTime: userLastSeenTime,
+      isOnline: userOnlineStatus,
     });
 
     // Start session
@@ -193,5 +197,19 @@ export class ChatsService implements OnModuleInit {
     return await this.chatModel
       .updateMany({ friendEmail: email }, { name })
       .session(session);
+  }
+
+  async makeUserOnline(userEmail: string) {
+    return await this.chatModel.updateMany(
+      { friendEmail: userEmail },
+      { isOnline: true },
+    );
+  }
+
+  async makeUserOffline(userEmail: string) {
+    return await this.chatModel.updateMany(
+      { friendEmail: userEmail },
+      { isOnline: true },
+    );
   }
 }

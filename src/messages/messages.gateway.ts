@@ -42,8 +42,10 @@ export class MessagesGateway
   }
 
   async handleDisconnect(client: Socket) {
-    // Update user offline status in database
+    // Update user offline status in users collection
     await this.UsersService.makeUserOffline(client.data.email);
+    // Update user activity status in chats collections
+    await this.chatsService.makeUserOffline(client.data.email);
     // Send the offline event to the contacts
     const chats = await this.chatsService.findAllChats(client.data.email);
     const contacts = chats.map((chat: Chat) => chat.friendEmail);
@@ -62,8 +64,10 @@ export class MessagesGateway
     client.join(email);
     // Save the email address in the client data
     client.data.email = email;
-    // Update user online status in database
+    // Update user online status in users collection
     await this.UsersService.makeUserOnline(email);
+    // Update user activity status in chats collections
+    await this.chatsService.makeUserOnline(email);
     // Send the online event to the contacts
     const chats = await this.chatsService.findAllChats(email);
     const contacts = chats.map((chat: Chat) => chat.friendEmail);

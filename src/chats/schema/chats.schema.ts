@@ -31,6 +31,9 @@ export class Chat {
 
   @Prop()
   lastSeenTime: number;
+
+  @Prop()
+  isOnline: boolean;
 }
 
 export const ChatSchema = SchemaFactory.createForClass(Chat);
