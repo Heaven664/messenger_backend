@@ -212,4 +212,14 @@ export class ChatsService implements OnModuleInit {
       { isOnline: true },
     );
   }
+
+  async updateLastSeenTime(
+    friendEmail: string,
+    disconnectionTimestamp: number,
+  ) {
+    return await this.chatModel.updateMany(
+      { friendEmail },
+      { lastSeenTime: disconnectionTimestamp },
+    );
+  }
 }

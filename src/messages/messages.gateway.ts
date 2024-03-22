@@ -42,18 +42,25 @@ export class MessagesGateway
   }
 
   async handleDisconnect(client: Socket) {
+    const disconnectionTimestamp = new Date().getTime();
     // Update user offline status in users collection
     await this.UsersService.makeUserOffline(client.data.email);
     // Update user activity status in chats collections
     await this.chatsService.makeUserOffline(client.data.email);
+    // Update last seen time in chats collections
+    await this.chatsService.updateLastSeenTime(
+      client.data.email,
+      disconnectionTimestamp,
+    );
     // Send the offline event to the contacts
     const chats = await this.chatsService.findAllChats(client.data.email);
     const contacts = chats.map((chat: Chat) => chat.friendEmail);
     for (const contact of contacts) {
       this.server.to(contact).emit('friend offline', client.data.email);
-      this.server
-        .to(contact)
-        .emit('check header offline status', client.data.email);
+      this.server.to(contact).emit('check header offline status', {
+        email: client.data.email,
+        lastSeenTime: disconnectionTimestamp,
+      });
     }
     console.log('client disconnected', client.id);
   }
