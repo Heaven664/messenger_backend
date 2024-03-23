@@ -128,4 +128,23 @@ export class MessagesGateway
       .to(friendEmail)
       .emit('new contact', { friendship, adderEmail: userEmail });
   }
+
+  @SubscribeMessage('remove contact')
+  async onContactRemove(
+    @MessageBody('userEmail') userEmail: string,
+    @MessageBody('friendEmail') friendEmail: string,
+  ) {
+    // Look up the contact record
+    const contact = await this.contactsService.findFriendship(
+      friendEmail,
+      userEmail,
+    );
+    const friendship = contact ? contact.friendship : null;
+
+    // Friendship should not exist
+    if (friendship) return;
+
+    // Send socket event to the user who got added to update their contacts
+    this.server.to(friendEmail).emit('contact removed', userEmail);
+  }
 }
