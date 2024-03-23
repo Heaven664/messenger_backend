@@ -24,7 +24,10 @@ export class MessagesController {
     const { email: userEmail } = req.user;
 
     // If sender email does not match with the user email in the token, throw an error
-    if (senderEmail !== userEmail) throw new UnauthorizedException();
+    if (senderEmail !== userEmail)
+      throw new UnauthorizedException(
+        'Sender email does not match with the user email in the token',
+      );
 
     return this.messagesService.addMessage(addMessageDto);
   }

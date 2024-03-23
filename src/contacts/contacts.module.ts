@@ -4,6 +4,7 @@ import { ContactsService } from './contacts.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Contact, ContactSchema } from './schemas/contact.schema';
 import { UsersModule } from 'src/users/users.module';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -11,6 +12,6 @@ import { UsersModule } from 'src/users/users.module';
     MongooseModule.forFeature([{ name: Contact.name, schema: ContactSchema }]),
   ],
   controllers: [ContactsController],
-  providers: [ContactsService],
+  providers: [ContactsService, JwtService],
 })
 export class ContactsModule {}
