@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { AddContactDto, RemoveContactDto } from './dto/contact-dto';
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { Contact } from './schemas/contact.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
@@ -105,33 +105,74 @@ export class ContactsService implements OnModuleInit {
     return await friendship.deleteOne();
   }
 
-  async updateUserAvatar(email: string, imageSrc: string) {
-    return await this.contactModel.updateMany(
-      { 'friendship.email': email },
-      { $set: { 'friendship.$.imageSrc': imageSrc } },
-    );
+  /**
+   * Updates user avatar in all contacts
+   * @param email email for a query
+   * @param imageSrc image source to update the value
+   * @param session optional session for a transaction, default is null
+   * @returns a return object for mongo updateMany operation
+   */
+  async updateUserAvatar(
+    email: string,
+    imageSrc: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    return await this.contactModel
+      .updateMany(
+        { 'friendship.email': email },
+        { $set: { 'friendship.$.imageSrc': imageSrc } },
+      )
+      .session(session);
   }
 
-  async updateLastSeenPermission(email: string, lastSeenPermission: boolean) {
-    return await this.contactModel.updateMany(
-      {
-        'friendship.email': email,
-      },
-      {
-        $set: { 'friendship.$.lastSeenPermission': lastSeenPermission },
-      },
-    );
-  }
-
-  async updateUserInfo(name: string, email: string, residency: string) {
-    return await this.contactModel.updateMany(
-      { friendship: { $elemMatch: { email } } },
-      {
-        $set: {
-          'friendship.$.name': name,
-          'friendship.$.residency': residency,
+  /**
+   * Updates last seen permission in all contacts
+   * @param email Email for a query
+   * @param lastSeenPermission New last seen permission value to update
+   * @param session Optional session for a transaction, default is null
+   * @returns A return object for mongo updateMany operation
+   */
+  async updateLastSeenPermission(
+    lastSeenPermission: boolean,
+    email: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    return await this.contactModel
+      .updateMany(
+        {
+          'friendship.email': email,
         },
-      },
-    );
+        {
+          $set: { 'friendship.$.lastSeenPermission': lastSeenPermission },
+        },
+      )
+      .session(session);
+  }
+
+  /**
+   * Updates user info in all contacts
+   * @param name New user name to update
+   * @param email User email for a query
+   * @param residency New residency to update
+   * @param session Optional session for a transaction, default is null
+   * @returns A return object for mongo updateMany operation
+   */
+  async updateUserInfo(
+    name: string,
+    email: string,
+    residency: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    return await this.contactModel
+      .updateMany(
+        { friendship: { $elemMatch: { email } } },
+        {
+          $set: {
+            'friendship.$.name': name,
+            'friendship.$.residency': residency,
+          },
+        },
+      )
+      .session(session);
   }
 }

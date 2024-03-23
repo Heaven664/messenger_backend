@@ -10,5 +10,5 @@ export const resolveDatabaseError = (errorCode: number) => {
   if (errorCode === 11000) {
     throw new BadRequestException(InputErrorMessages.USER_ALREADY_EXISTS);
   }
-  throw new BadRequestException();
+  throw new BadRequestException('Registration failed');
 };

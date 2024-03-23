@@ -83,8 +83,8 @@ export class UsersController {
     @Req() req,
   ) {
     const { email } = req.user;
-    const updatedImagePath = `http://localhost:3001/images/${file.filename}`;
+    const updatedImagePath = `/images/${file.filename}`;
     await this.usersService.updateUserAvatar(email, updatedImagePath);
-    return file.filename;
+    return updatedImagePath;
   }
 }

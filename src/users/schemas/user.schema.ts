@@ -25,6 +25,9 @@ export class User {
 
   @Prop()
   lastSeenTime: number;
+
+  @Prop()
+  isOnline: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

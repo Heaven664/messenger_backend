@@ -1,10 +1,15 @@
 import { JwtService } from '@nestjs/jwt';
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  OnModuleInit,
+} from '@nestjs/common';
 import { UserWithoutPassword } from './interfaces/user.interface';
 import createUser from './helpers/user.factory';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
-import { Model, QueryOptions } from 'mongoose';
+import mongoose, { Model, QueryOptions } from 'mongoose';
 import { CreateUserDto, LoginUserDto } from 'src/shared/dto/create-user.dto';
 import { resolveDatabaseError } from './helpers/customDatabaseErrorHandler';
 import { comparePassword } from './helpers/validatePassword';
@@ -25,8 +30,10 @@ export class UsersService implements OnModuleInit {
     @InjectModel(User.name) private userModel: Model<User>,
     private readonly jwtService: JwtService,
     private moduleRef: ModuleRef,
+    @InjectConnection() private readonly connection: mongoose.Connection,
   ) {}
 
+  // Get module references to avoid circular dependencies
   onModuleInit() {
     this.messagesService = this.moduleRef.get(MessagesService, {
       strict: false,
@@ -37,6 +44,12 @@ export class UsersService implements OnModuleInit {
     });
   }
 
+  /**
+   * Registers a new user and returns user data and access and refresh tokens
+   * @param userData User data to register
+   * @returns User data and access and refresh tokens
+   * @throws BadRequestException if user already exists or database error
+   */
   async registerNewUser(userData: CreateUserDto) {
     // Create new user object with user factory
     const user = await createUser(userData);
@@ -53,17 +66,18 @@ export class UsersService implements OnModuleInit {
       resolveDatabaseError(error.code);
     }
 
-    // Payload to be extracted from the client request
+    // Generate JWT payload
     const payload = {
       email: user.email,
       id: user.id,
     };
+
     // User object to be returned to the client with initial password
     const returnUser = { ...user, password: initialPassword };
 
+    // Return user data and with access and refresh tokens
     return {
       user: returnUser,
-      // Generate access and refresh tokens
       backendTokens: {
         accessToken: await this.jwtService.signAsync(payload, {
           expiresIn: '1h',
@@ -80,6 +94,12 @@ export class UsersService implements OnModuleInit {
     };
   }
 
+  /**
+   * Logs in a user and returns user data and access and refresh tokens
+   * @param userData User data to login
+   * @returns An object with user data and access and refresh tokens
+   * @throws BadRequestException if user not found or password is invalid
+   */
   async loginUser(userData: LoginUserDto) {
     // Find user by email in database
     const user = await this.userModel.findOne({ email: userData.email });
@@ -100,18 +120,19 @@ export class UsersService implements OnModuleInit {
       imageSrc: user.imageSrc,
       residency: user.residency,
       lastSeenPermission: user.lastSeenPermission,
+      isOnline: true,
       lastSeenTime: user.lastSeenTime,
     };
 
-    // Payload to be extracted from the client request
+    // Generate JWT payload
     const payload = {
       email: user.email,
       id: user.id,
     };
 
+    // Return user data and with access and refresh tokens
     return {
       user: returnUserData,
-      // Generate access and refresh tokens
       backendTokens: {
         accessToken: await this.jwtService.signAsync(payload, {
           expiresIn: '1h',
@@ -128,6 +149,12 @@ export class UsersService implements OnModuleInit {
     };
   }
 
+  /**
+   * Finds a user by id and returns a user object without password property
+   * @param id A user id for a query
+   * @returns A user object without password property
+   * @throws BadRequestException if user not found
+   */
   async findUserById(id: string): Promise<UserWithoutPassword> {
     // Find user by id in database
     const user = await this.userModel.findById(id);
@@ -146,9 +173,16 @@ export class UsersService implements OnModuleInit {
       residency: user.residency,
       lastSeenPermission: user.lastSeenPermission,
       lastSeenTime: user.lastSeenTime,
+      isOnline: user.isOnline,
     };
   }
 
+  /**
+   * Finds a user by email and returns a user object without password property
+   * @param email A user email for a query
+   * @returns A user object without password property
+   * @throws BadRequestException if user not found
+   */
   async findUserByEmail(email: string): Promise<UserWithoutPassword> {
     const user = await this.userModel.findOne({ email });
 
@@ -166,55 +200,102 @@ export class UsersService implements OnModuleInit {
       residency: user.residency,
       lastSeenPermission: user.lastSeenPermission,
       lastSeenTime: user.lastSeenTime,
+      isOnline: user.isOnline,
     };
   }
 
+  /**
+   * Updates user info in all related collections within a transaction
+   * @param updateUserInfoDto A DTO with user data to update
+   * @param email A user email for queries
+   * @returns Updated user data
+   * @throws ConflictException if transaction fails
+   */
   async updateUserInfo(
     updateUserInfoDto: UpdateUserInfoDto,
     email: string,
   ): Promise<UserWithoutPassword> {
-    // Destructure id and other data from updateUserDto
     const { id, ...newInfoValues } = updateUserInfoDto;
+
     // Configure options for the update operation
     const operationOptions: QueryOptions = {
       new: true,
       lean: true,
     };
 
-    // Find and modify user by id in database
-    const updatedInfo = await this.userModel.findByIdAndUpdate(
-      id,
-      newInfoValues,
-      operationOptions,
-    );
+    // Start a session
+    const session = await this.connection.startSession();
 
-    // Update last seen permission in chats and contacts
-    await this.chatsService.updateUserInfo(updatedInfo.name, email);
-    await this.contactsService.updateUserInfo(
-      updatedInfo.name,
-      email,
-      updatedInfo.residency,
-    );
+    // Start a transaction
+    session.startTransaction();
+    try {
+      // Find and modify user by id in database
+      const updatedInfo = await this.userModel
+        .findByIdAndUpdate(id, newInfoValues, operationOptions)
+        .session(session);
 
-    // Return user data
-    return {
-      id: updatedInfo._id.toString(),
-      name: updatedInfo.name,
-      email: updatedInfo.email,
-      imageSrc: updatedInfo.imageSrc,
-      residency: updatedInfo.residency,
-      lastSeenPermission: updatedInfo.lastSeenPermission,
-      lastSeenTime: updatedInfo.lastSeenTime,
-    };
+      // Update last seen permission in chats and contacts
+      await this.chatsService.updateUserInfo(updatedInfo.name, email, session);
+      await this.contactsService.updateUserInfo(
+        updatedInfo.name,
+        email,
+        updatedInfo.residency,
+        session,
+      );
+
+      // Commit the transaction
+      await session.commitTransaction();
+
+      // Return user data
+      return {
+        id: updatedInfo._id.toString(),
+        name: updatedInfo.name,
+        email: updatedInfo.email,
+        imageSrc: updatedInfo.imageSrc,
+        residency: updatedInfo.residency,
+        lastSeenPermission: updatedInfo.lastSeenPermission,
+        lastSeenTime: updatedInfo.lastSeenTime,
+        isOnline: updatedInfo.isOnline,
+      };
+    } catch (error) {
+      console.log(error);
+      // Abort the transaction
+      await session.abortTransaction();
+      throw new ConflictException('Update failed');
+    } finally {
+      // End the session
+      session.endSession();
+    }
   }
 
+  /**
+   * Updates a user avatar in all related collections within a transaction
+   * @param email An email address of a user to update
+   * @param imageSrc New image source to update
+   */
   async updateUserAvatar(email: string, imageSrc: string) {
-    await this.userModel.findOneAndUpdate({ email }, { imageSrc });
-    await this.messagesService.updateUserAvatar(email, imageSrc);
-    await this.chatsService.updateUserAvatar(email, imageSrc);
-    await this.contactsService.updateUserAvatar(email, imageSrc);
+    // Start a session
+    const session = await this.connection.startSession();
+
+    // Update imageSrc in user, messages, chats and contacts within a transaction
+    await session.withTransaction(async () => {
+      await this.userModel
+        .findOneAndUpdate({ email }, { imageSrc })
+        .session(session);
+      await this.messagesService.updateUserAvatar(email, imageSrc, session);
+      await this.chatsService.updateUserAvatar(email, imageSrc, session);
+      await this.contactsService.updateUserAvatar(email, imageSrc, session);
+    });
+    // End the session
+    session.endSession();
   }
 
+  /**
+   * Updates last seen permission in all related collections within a transaction
+   * @param object An object with user email and lastSeenPermission
+   * @returns A user object with updated lastSeenPermission
+   * @throws ConflictException if transaction fails
+   */
   async updateLastSeenPermission({
     email,
     id,
@@ -226,32 +307,63 @@ export class UsersService implements OnModuleInit {
       lean: true,
     };
 
-    // Find user by id and change lastSeenPermission in database
-    const updatedInfo = await this.userModel.findByIdAndUpdate(
-      id,
-      { lastSeenPermission },
-      operationOptions,
-    );
+    // Start a session
+    const session = await this.connection.startSession();
 
-    // Update last seen permission in chats and contacts
-    await this.chatsService.updateLastSeenPermission(
-      updatedInfo.lastSeenPermission,
-      email,
-    );
-    await this.contactsService.updateLastSeenPermission(
-      lastSeenPermission,
-      email,
-    );
+    // Start a transaction
+    session.startTransaction();
 
-    // Return user data
-    return {
-      id: updatedInfo._id.toString(),
-      name: updatedInfo.name,
-      email: updatedInfo.email,
-      imageSrc: updatedInfo.imageSrc,
-      residency: updatedInfo.residency,
-      lastSeenPermission: updatedInfo.lastSeenPermission,
-      lastSeenTime: updatedInfo.lastSeenTime,
-    };
+    try {
+      // Find user by id and change lastSeenPermission in database
+      const updatedInfo = await this.userModel
+        .findByIdAndUpdate(id, { lastSeenPermission }, operationOptions)
+        .session(session);
+
+      // Update last seen permission in chats and contacts
+      await this.chatsService.updateLastSeenPermission(
+        lastSeenPermission,
+        email,
+        session,
+      );
+      await this.contactsService.updateLastSeenPermission(
+        lastSeenPermission,
+        email,
+        session,
+      );
+
+      // Commit the transaction
+      await session.commitTransaction();
+
+      // Return user data
+      return {
+        id: updatedInfo._id.toString(),
+        name: updatedInfo.name,
+        email: updatedInfo.email,
+        imageSrc: updatedInfo.imageSrc,
+        residency: updatedInfo.residency,
+        lastSeenPermission: updatedInfo.lastSeenPermission,
+        lastSeenTime: updatedInfo.lastSeenTime,
+        isOnline: updatedInfo.isOnline,
+      };
+    } catch (error) {
+      console.log(error);
+      // Abort the transaction
+      await session.abortTransaction();
+      throw new ConflictException('Update failed');
+    } finally {
+      // End the session
+      session.endSession();
+    }
+  }
+
+  async makeUserOnline(email: string) {
+    await this.userModel.findOneAndUpdate({ email }, { isOnline: true });
+  }
+
+  async makeUserOffline(email: string, lastSeenTimeStamp: number) {
+    await this.userModel.findOneAndUpdate(
+      { email },
+      { isOnline: false, lastSeenTime: lastSeenTimeStamp },
+    );
   }
 }

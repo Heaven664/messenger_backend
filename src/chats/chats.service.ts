@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import { Chat } from './schema/chats.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { UsersService } from 'src/users/users.service';
 import { MessagesService } from 'src/messages/messages.service';
 import { ModuleRef } from '@nestjs/core';
@@ -13,6 +13,7 @@ export class ChatsService implements OnModuleInit {
   constructor(
     @InjectModel(Chat.name) private chatModel: Model<Chat>,
     private moduleRef: ModuleRef,
+    @InjectConnection() private readonly connection: mongoose.Connection,
   ) {}
 
   onModuleInit() {
@@ -40,6 +41,7 @@ export class ChatsService implements OnModuleInit {
       imageSrc: userImage,
       lastSeenTime: userLastSeenTime,
       lastSeenPermission: userLastSeenPermission,
+      isOnline: userOnlineStatus,
     } = user;
 
     // Destructure friend data
@@ -50,6 +52,7 @@ export class ChatsService implements OnModuleInit {
       imageSrc: friendImage,
       lastSeenPermission: friendLastSeenPermission,
       lastSeenTime: friendLastSeenTime,
+      isOnline: friendOnlineStatus,
     } = friend;
 
     // Check if user and friend exist
@@ -68,6 +71,7 @@ export class ChatsService implements OnModuleInit {
       unreadMessages: 0,
       lastSeenPermission: friendLastSeenPermission,
       lastSeenTime: friendLastSeenTime,
+      isOnline: friendOnlineStatus,
     });
 
     // Create chat data for a user
@@ -81,11 +85,21 @@ export class ChatsService implements OnModuleInit {
       unreadMessages: 1,
       lastSeenPermission: userLastSeenPermission,
       lastSeenTime: userLastSeenTime,
+      isOnline: userOnlineStatus,
     });
 
-    // Create a char for user and friend
-    await secondChatData.save();
-    return await firstChatData.save();
+    // Start session
+    const session = await this.connection.startSession();
+
+    // Create new chats within a transaction
+    await session.withTransaction(async () => {
+      // Create chats for user and friend
+      await secondChatData.save();
+      await firstChatData.save();
+    });
+
+    // End session
+    session.endSession();
   }
 
   async findChatByEmail(userEmail: string, friendEmail: string) {
@@ -120,30 +134,82 @@ export class ChatsService implements OnModuleInit {
       { lastMessage: lastMessageTime },
     );
   }
+
+  /**
+   * Clears unread messages
+   * @param userEmail User email for a query
+   * @param friendEmail Friend email for a query
+   */
   async clearUnreadMessages(userEmail: string, friendEmail: string) {
+    // Update unread messages
     await this.chatModel.findOneAndUpdate(
       { userEmail, friendEmail },
       { unreadMessages: 0 },
     );
-    await this.messagesService.readMessages(userEmail, friendEmail);
-    return;
   }
 
-  async updateUserAvatar(email: string, imageSrc: string) {
+  /**
+   * Updates user avatar in all chats
+   * @param email user email for a query
+   * @param imageSrc image source to update the value
+   * @param session session for a transaction, default is null
+   * @returns a return object for mongo updateMany operation
+   */
+  async updateUserAvatar(
+    email: string,
+    imageSrc: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    return await this.chatModel
+      .updateMany({ friendEmail: email }, { imageUrl: imageSrc })
+      .session(session);
+  }
+
+  /**
+   * Updates last seen permission in all chats
+   * @param lastSeenPermission new last seen permission value to update
+   * @param email user email for a query
+   * @param session optional session for a transaction, default is null
+   * @returns a return object for mongo updateMany operation
+   */
+  async updateLastSeenPermission(
+    lastSeenPermission: boolean,
+    email: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    return await this.chatModel
+      .updateMany({ friendEmail: email }, { lastSeenPermission })
+      .session(session);
+  }
+
+  /**
+   * Updates user info in all chats
+   * @param name New user name to update
+   * @param email An email of a user for a query
+   * @param session Optional session for a transaction, default is null
+   * @returns A return object for mongo updateMany operation
+   */
+  async updateUserInfo(
+    name: string,
+    email: string,
+    session: mongoose.ClientSession | null = null,
+  ) {
+    return await this.chatModel
+      .updateMany({ friendEmail: email }, { name })
+      .session(session);
+  }
+
+  async makeUserOnline(userEmail: string) {
     return await this.chatModel.updateMany(
-      { friendEmail: email },
-      { imageUrl: imageSrc },
+      { friendEmail: userEmail },
+      { isOnline: true },
     );
   }
 
-  async updateLastSeenPermission(lastSeenPermission: boolean, email: string) {
+  async makeUserOffline(userEmail: string, disconnectionTimestamp: number) {
     return await this.chatModel.updateMany(
-      { friendEmail: email },
-      { lastSeenPermission },
+      { friendEmail: userEmail },
+      { isOnline: false, lastSeenTime: disconnectionTimestamp },
     );
-  }
-
-  async updateUserInfo(name: string, email: string) {
-    return await this.chatModel.updateMany({ friendEmail: email }, { name });
   }
 }
