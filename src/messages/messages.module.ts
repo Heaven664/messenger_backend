@@ -7,6 +7,7 @@ import { ChatsModule } from 'src/chats/chats.module';
 import { UsersModule } from 'src/users/users.module';
 import { MessagesGateway } from './messages.gateway';
 import { ContactsModule } from 'src/contacts/contacts.module';
+import { JwtService } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -16,7 +17,7 @@ import { ContactsModule } from 'src/contacts/contacts.module';
     MongooseModule.forFeature([{ name: Message.name, schema: MessageSchema }]),
   ],
   controllers: [MessagesController],
-  providers: [MessagesService, MessagesGateway],
+  providers: [MessagesService, MessagesGateway, JwtService],
   exports: [MessagesService],
 })
 export class MessagesModule {}
