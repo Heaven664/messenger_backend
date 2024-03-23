@@ -16,13 +16,15 @@ import { ChatsService } from 'src/chats/chats.service';
 import { ModuleRef } from '@nestjs/core';
 import { OnModuleInit } from '@nestjs/common';
 import { Chat } from 'src/chats/schema/chats.schema';
+import { ContactsService } from 'src/contacts/contacts.service';
 
 @WebSocketGateway({ cors: corsOptions })
 export class MessagesGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
 {
   private chatsService: ChatsService;
-  private UsersService: UsersService;
+  private usersService: UsersService;
+  private contactsService: ContactsService;
 
   constructor(
     private messagesService: MessagesService,
@@ -31,7 +33,10 @@ export class MessagesGateway
 
   onModuleInit() {
     this.chatsService = this.moduleRef.get(ChatsService, { strict: false });
-    this.UsersService = this.moduleRef.get(UsersService, { strict: false });
+    this.usersService = this.moduleRef.get(UsersService, { strict: false });
+    this.contactsService = this.moduleRef.get(ContactsService, {
+      strict: false,
+    });
   }
 
   @WebSocketServer()
@@ -44,7 +49,7 @@ export class MessagesGateway
   async handleDisconnect(client: Socket) {
     const disconnectionTimestamp = new Date().getTime();
     // Update user offline status in users collection
-    await this.UsersService.makeUserOffline(
+    await this.usersService.makeUserOffline(
       client.data.email,
       disconnectionTimestamp,
     );
@@ -76,7 +81,7 @@ export class MessagesGateway
     // Save the email address in the client data
     client.data.email = email;
     // Update user online status in users collection
-    await this.UsersService.makeUserOnline(email);
+    await this.usersService.makeUserOnline(email);
     // Update user activity status in chats collections
     await this.chatsService.makeUserOnline(email);
     // Send the online event to the contacts
@@ -104,5 +109,23 @@ export class MessagesGateway
     await this.messagesService.readMessages(receiverEmail, senderEmail);
     // Send the message read event to the sender
     this.server.to(senderEmail).emit('message read');
+  }
+
+  @SubscribeMessage('add contact')
+  async onAddContact(
+    @MessageBody('userEmail') userEmail: string,
+    @MessageBody('friendEmail') friendEmail: string,
+  ) {
+    // Find the friendship between the two users
+    const contact = await this.contactsService.findFriendship(
+      friendEmail,
+      userEmail,
+    );
+    const friendship = contact ? contact.friendship : null;
+
+    // Send socket event to the user who got added to update their contacts
+    this.server
+      .to(friendEmail)
+      .emit('new contact', { friendship, adderEmail: userEmail });
   }
 }
