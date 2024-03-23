@@ -36,8 +36,15 @@ export class ContactsController {
     return this.contactsService.findFriends(email);
   }
 
+  @UseGuards(JwtGuard)
   @Delete('unfriend')
-  async removeContact(@Body() removeContactDto: RemoveContactDto) {
+  async removeContact(@Body() removeContactDto: RemoveContactDto, @Req() req) {
+    // Email in request should match with the user email in the token
+    const { email } = req.user;
+    if (removeContactDto.userEmail !== email)
+      throw new UnauthorizedException(
+        'Email does not match with the user email in the token',
+      );
     return this.contactsService.removeContact(removeContactDto);
   }
 }
