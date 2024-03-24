@@ -46,9 +46,7 @@ export class MessagesGateway
   @WebSocketServer()
   server: Server;
 
-  handleConnection(client: Socket) {
-    console.log('client connected', client.id);
-  }
+  handleConnection() {}
 
   async handleDisconnect(client: Socket) {
     const disconnectionTimestamp = new Date().getTime();
