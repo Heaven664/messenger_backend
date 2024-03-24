@@ -11,11 +11,18 @@ import { MessagesModule } from './messages/messages.module';
 import { ChatsModule } from './chats/chats.module';
 import { ImagesModule } from './images/images.module';
 
+// Configure the environment file based on the NODE_ENV environment variable
+const ENV = process.env.NODE_ENV;
+const ENV_FILE = ENV ? `.env.${ENV}` : '.env';
+
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ENV_FILE,
+    }),
     AuthModule,
     UsersModule,
-    ConfigModule.forRoot({ isGlobal: true }),
     MongooseModule.forRoot(MongoConnectionString),
     ContactsModule,
     MessagesModule,
