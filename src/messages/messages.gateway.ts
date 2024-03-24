@@ -9,7 +9,6 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { corsOptions } from 'config/cors.config';
 import { Socket, Server } from 'socket.io';
 import { AddMessageDto } from './dto/message-dto';
 import { ChatsService } from 'src/chats/chats.service';
@@ -18,7 +17,12 @@ import { OnModuleInit } from '@nestjs/common';
 import { Chat } from 'src/chats/schema/chats.schema';
 import { ContactsService } from 'src/contacts/contacts.service';
 
-@WebSocketGateway({ cors: corsOptions })
+@WebSocketGateway({
+  cors: {
+    origin: process.env.ORIGIN,
+    credentials: true,
+  },
+})
 export class MessagesGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit
 {

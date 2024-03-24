@@ -14,6 +14,7 @@ import { ImagesModule } from './images/images.module';
 // Configure the environment file based on the NODE_ENV environment variable
 const ENV = process.env.NODE_ENV;
 const ENV_FILE = ENV ? `.env.${ENV}` : '.env';
+console.log(`Using environment file: ${ENV_FILE}`);
 
 @Module({
   imports: [

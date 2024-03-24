@@ -4,5 +4,6 @@ declare namespace NodeJS {
     DB_PASSWORD: string;
     JWT_SECRET_KEY: string;
     JWT_REFRESH_TOKEN: string;
+    ORIGIN?: string;
   }
 }
