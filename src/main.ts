@@ -14,6 +14,6 @@ async function bootstrap() {
   app.enableCors(corsOptions);
   // Enable global validation and transformation of received dto data
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
-  await app.listen(3001);
+  await app.listen(process.env.PORT);
 }
 bootstrap();
