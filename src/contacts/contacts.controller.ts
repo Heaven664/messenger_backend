@@ -22,7 +22,6 @@ export class ContactsController {
   async addContact(@Body() addContactDto: AddContactDto, @Req() req) {
     // Email should match with the user email in the token
     const { email } = req.user;
-    console.log(email, addContactDto.email);
     if (addContactDto.email !== email)
       throw new UnauthorizedException(
         'Email does not match with the user email in the token',

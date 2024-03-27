@@ -19,7 +19,7 @@ import { ContactsService } from 'src/contacts/contacts.service';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.ORIGIN,
+    origin: process.env.ORIGIN || 'http://localhost:3000',
     credentials: true,
   },
 })
@@ -70,7 +70,6 @@ export class MessagesGateway
         lastSeenTime: disconnectionTimestamp,
       });
     }
-    console.log('client disconnected', client.id);
   }
 
   @SubscribeMessage('join')
