@@ -16,7 +16,9 @@ This repository contains server code. For client code visit [this repository](ht
 
 ## Deployment
 
-This application is deployed for public usage at [https://messenger664.vercel.app](https://messenger664.vercel.app).
+This application is deployed for public usage at [https://messenger664.vercel.app](https://messenger664.vercel.app). 
+
+**My email is omarhamid@gmail.com Feel free to add me and send a message**
 
 I chose not to create a shared account and skipping the registration step for visitors. Maintaining such an account would require constant monitoring and removal of inappropriate messages.
 
